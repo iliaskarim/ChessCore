@@ -1,0 +1,11 @@
+version: 2.1
+
+jobs:
+  test:
+    macos:
+      # https://circleci.com/docs/2.0/testing-ios/#supported-xcode-versions
+      xcode: 12.5.1
+
+    steps:
+      - checkout
+      - run: swift test --enable-code-coverage
