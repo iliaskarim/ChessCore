@@ -8,6 +8,8 @@ final class ChessTests: XCTestCase {
     XCTAssertNoThrow(try game.move("e6"))
     XCTAssertNoThrow(try game.move("g4"))
     XCTAssertNoThrow(try game.move("Qh4#"))
-    XCTAssertEqual(game.victor, .black)
+    XCTAssertEqual(game.victor, .white
+
+    )
   }
 }
