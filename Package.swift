@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "Chess",
+  name: "Chess-Core",
   products: [
     .library(
       name: "Chess",
