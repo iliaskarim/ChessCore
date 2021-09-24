@@ -1,5 +1,5 @@
 import XCTest
-@testable import Chess
+@testable import ChessCore
 
 final class ChessTests: XCTestCase {
   func testFoolsMate() {
