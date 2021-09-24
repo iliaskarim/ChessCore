@@ -6,7 +6,7 @@
 //  Copyright © 2021 Ilias Karim. All rights reserved.
 //
 
-import Cocoa
+import Foundation
 
 extension Board.Square.Rank {
   static func - (lhs: Board.Square.Rank, rhs: Board.Square.Rank) -> Int {
