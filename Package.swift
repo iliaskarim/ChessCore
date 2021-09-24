@@ -2,18 +2,18 @@
 import PackageDescription
 
 let package = Package(
-  name: "Chess-Core",
+  name: "ChessCore",
   products: [
     .library(
-      name: "Chess",
-      targets: ["Chess"]),
+      name: "ChessCore",
+      targets: ["ChessCore"]),
   ],
   targets: [
     .target(
-      name: "Chess",
+      name: "ChessCore",
       dependencies: []),
     .testTarget(
-      name: "ChessTests",
-      dependencies: ["Chess"]),
+      name: "ChessCoreTests",
+      dependencies: ["ChessCore"]),
   ]
 )
