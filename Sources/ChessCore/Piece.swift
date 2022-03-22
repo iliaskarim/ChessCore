@@ -6,37 +6,32 @@
 //  Copyright © 2021 Ilias Karim. All rights reserved.
 //
 
-extension Board.Square {
-  enum Direction: CaseIterable {
-    case north
-    case west
-    case south
-    case east
-    case northWest
-    case southWest
-    case southEast
-    case northEast
+fileprivate extension Square {
+  typealias Direction = (vertical: VerticalDirection?, horizontal: HorizontalDirection?)
 
-    var file: Int {
-      switch self {
-      case .west, .northWest, .southWest:
-        return -1
-      case .east, .northEast, .southEast:
-        return 1
-      default:
-        return 0
-      }
+  enum HorizontalDirection: Int, CaseIterable {
+    case east = 1
+    case west = -1
+
+    var direction: Direction {
+      (vertical: nil, horizontal: self)
     }
+  }
 
-    var rank: Int {
-      switch self {
-      case .north, .northWest, .northEast:
-        return 1
-      case .south, .southWest, .southEast:
-        return -1
-      default:
-        return 0
-      }
+  enum VerticalDirection: Int, CaseIterable {
+    case north = 1
+    case south = -1
+
+    var direction: Direction {
+      (vertical: self, horizontal: nil)
+    }
+  }
+
+  static var allDirections = cardinalDirections + diagonalDirections
+  static var cardinalDirections: [Direction] = HorizontalDirection.allCases.map(\.direction) + VerticalDirection.allCases.map(\.direction)
+  static var diagonalDirections: [Direction] = HorizontalDirection.allCases.flatMap { horizontalDirection in
+    VerticalDirection.allCases.map { verticalDirection in
+      (verticalDirection, horizontalDirection)
     }
   }
 
@@ -46,7 +41,19 @@ extension Board.Square {
   }
 
   func squareInDirection(_ direction: Direction) -> Self? {
-    Self.init(file: file + direction.file, rank: rank + direction.rank)
+    Self.init(file: file + direction.horizontal.integerValue, rank: rank + direction.vertical.integerValue)
+  }
+}
+
+private extension Optional where Wrapped == Square.HorizontalDirection {
+  var integerValue: Int {
+    self?.rawValue ?? 0
+  }
+}
+
+private extension Optional where Wrapped == Square.VerticalDirection {
+  var integerValue: Int {
+    self?.rawValue ?? 0
   }
 }
 
@@ -75,74 +82,54 @@ public struct Piece: Equatable {
     case king = "K"
   }
 
-  func capturesFromSquare(_ square: Board.Square) -> [[Board.Square]] {
-    if case .pawn = figure {
-      switch color {
-      case .white:
-        let directions: [Board.Square.Direction] = [.northWest, .northEast]
-        return directions.compactMap { square.squareInDirection($0) }.map { [$0] }
-      case .black:
-        let directions: [Board.Square.Direction] = [.southEast, .southWest]
-        return directions.compactMap { square.squareInDirection($0) }.map { [$0] }
-      }
-    }
-    return movesFromSquare(square)
-  }
-
-  func movesFromSquare(_ square: Board.Square) -> [[Board.Square]] {
-    switch self.figure {
-    case .king:
-      return Board.Square.Direction.allCases.compactMap { direction in
-        square.squareInDirection(direction)
-      }.map { [$0] }
-
-    case .queen:
-      return Piece(color: color, figure: .rook).movesFromSquare(square) +
-        Piece(color: color, figure: .bishop).movesFromSquare(square)
-
-    case .rook:
-      let directions: [Board.Square.Direction] = [
-        .north, .west, .south, .east
-      ]
-      return directions.map { direction in
-        square.allSquaresInDirection(direction)
-      }
-
-    case .bishop:
-      let directions: [Board.Square.Direction] = [
-        .northWest, .northEast, .southWest, .southEast
-      ]
-      return directions.map { direction in
-        square.allSquaresInDirection(direction)
-      }
-
-    case .knight:
-      let directions: [(Int, Int)] = [
-        (-2, -1), (-2, 1), (2, -1), (2, 1),
-        (-1, -2), (-1, 2), (1, -2), (1, 2)
-      ]
-      return directions.map { direction in
-        Board.Square(file: square.file + direction.0, rank: square.rank - direction.1)
-      }.compactMap { $0 }.map { [$0] }
-
-    case .pawn:
-      switch color {
-      case .white:
-        return [[
-          Board.Square(file: square.file, rank: (square.rank + 1)!)] +
-          (square.rank == .two ? [Board.Square(file: square.file, rank: .four)] : [])]
-
-      case .black:
-        return [[
-          Board.Square(file: square.file, rank: (square.rank - 1)!)] +
-          (square.rank == .seven ? [Board.Square(file: square.file, rank: .five)] : [])]
-      }
-    }
-  }
-
   /// Color
   public let color: Color
 
   /// Figure
   public let figure: Figure
+
+  func capturesFromSquare(_ square: Square) -> [[Square]] {
+    if case .pawn = figure {
+      let directions: [Square.Direction] = color == .white ? [(.north, .west), (.north, .east)] : [(.south, .east), (.south, .west)]
+      return directions.compactMap(square.squareInDirection).map { [$0] }
+    }
+    return movesFromSquare(square)
+  }
+
+  func movesFromSquare(_ square: Square) -> [[Square]] {
+    switch self.figure {
+    case .king:
+      return Square.allDirections.compactMap(square.squareInDirection).map { [$0] }
+
+    case .queen:
+      return Square.allDirections.map(square.allSquaresInDirection)
+
+    case .rook:
+      return Square.cardinalDirections.map(square.allSquaresInDirection)
+
+    case .bishop:
+      return Square.diagonalDirections.map(square.allSquaresInDirection)
+
+    case .knight:
+      return [
+        (-2, -1), (-2, 1), (2, -1), (2, 1),
+        (-1, -2), (-1, 2), (1, -2), (1, 2)
+      ].compactMap { direction in
+        Square(file: square.file + direction.0, rank: square.rank - direction.1)
+      }.map { [$0] }
+
+    case .pawn:
+      switch color {
+      case .white:
+        return [[
+          Square(file: square.file, rank: (square.rank + 1)!)] +
+          (square.rank == .two ? [Square(file: square.file, rank: .four)] : [])]
+
+      case .black:
+        return [[
+          Square(file: square.file, rank: (square.rank - 1)!)] +
+          (square.rank == .seven ? [Square(file: square.file, rank: .five)] : [])]
+      }
+    }
+  }
 }
