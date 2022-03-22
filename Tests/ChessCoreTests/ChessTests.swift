@@ -12,6 +12,22 @@ final class ChessTests: XCTestCase {
     Square(file: .h, rank: .one): Piece(color: .white, figure: .rook)
   ]
 
+  func testA() throws {
+    var game = Game(board: [Square(file: .a, rank: .seven): Piece(color: .white, figure: .pawn)])
+    try game.move("a8Q")
+    print(game)
+  }
+
+  func testB() throws {
+    var game = Game(board: [
+      Square(file: .a, rank: .seven): Piece(color: .white, figure: .pawn),
+      Square(file: .b, rank: .eight): Piece(color: .black, figure: .rook)
+    ])
+    print(game)
+    try game.move("axb8R")
+    print(game)
+  }
+
   func testFoolsMate() throws {
     var game = Game()
     try game.move("f3")

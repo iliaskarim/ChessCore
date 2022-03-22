@@ -61,6 +61,12 @@ fileprivate extension Square {
 public struct Game {
   public typealias Board = [Square: Piece]
 
+  enum Outcome {
+    case checkmate(victor: Piece.Color)
+    case drawnGame(isStalemate: Bool)
+    case resignedGame(victor: Piece.Color)
+  }
+
   public var victor: Piece.Color? {
     guard let outcome = outcome else { return nil }
     switch outcome {
@@ -109,18 +115,15 @@ public struct Game {
       return
 
     case ("O-O", .black):
-      guard !isBlackKingMoved, !isNorthEastRookMoved else { break }
+      guard !board.isCheck(color: .black), !isBlackKingMoved, !isNorthEastRookMoved else { break }
       guard board[Square(file: .f, rank: .eight)] == nil else { break }
       guard board[Square(file: .g, rank: .eight)] == nil else { break }
-      guard !board.isCheck(color: .black) else { break }
 
       var mutableBoard = board
-      mutableBoard[Square(file: .e, rank: .eight)] = nil
-      mutableBoard[Square(file: .f, rank: .eight)] = Piece(color: .black, figure: .king)
+      mutableBoard[Square(file: .f, rank: .eight)] = mutableBoard.removeValue(forKey: Square(file: .e, rank: .eight))
       guard !mutableBoard.isCheck(color: .black) else { break }
 
-      mutableBoard[Square(file: .f, rank: .eight)] = nil
-      mutableBoard[Square(file: .g, rank: .eight)] = Piece(color: .black, figure: .king)
+      mutableBoard[Square(file: .g, rank: .eight)] = mutableBoard.removeValue(forKey: Square(file: .f, rank: .eight))
       guard !mutableBoard.isCheck(color: .black) else { break }
 
       moves += [notation]
@@ -130,10 +133,9 @@ public struct Game {
       return
 
     case ("O-O", .white):
-      guard !isWhiteKingMoved, !isSouthEastRookMoved else { break }
+      guard !board.isCheck(color: .white), !isWhiteKingMoved, !isSouthEastRookMoved else { break }
       guard board[Square(file: .f, rank: .one)] == nil else { break }
       guard board[Square(file: .g, rank: .one)] == nil else { break }
-      guard !board.isCheck(color: .white) else { break }
 
       var mutableBoard = board
       mutableBoard[Square(file: .e, rank: .one)] = nil
@@ -151,10 +153,9 @@ public struct Game {
       return
 
     case ("O-O-O", .black):
-      guard !isBlackKingMoved, !isNorthWestRookMoved else { break }
+      guard !board.isCheck(color: .black), !isBlackKingMoved, !isNorthWestRookMoved else { break }
       guard board[Square(file: .d, rank: .eight)] == nil else { break }
       guard board[Square(file: .c, rank: .eight)] == nil else { break }
-      guard !board.isCheck(color: .black) else { break }
 
       var mutableBoard = board
       mutableBoard[Square(file: .e, rank: .eight)] = nil
@@ -172,10 +173,9 @@ public struct Game {
       return
 
     case ("O-O-O", .white):
-      guard !isWhiteKingMoved, !isSouthWestRookMoved else { break }
+      guard !board.isCheck(color: .white), !isWhiteKingMoved, !isSouthWestRookMoved else { break }
       guard board[Square(file: .d, rank: .one)] == nil else { break }
       guard board[Square(file: .c, rank: .one)] == nil else { break }
-      guard !board.isCheck(color: .white) else { break }
 
       var mutableBoard = board
       mutableBoard[Square(file: .e, rank: .one)] = nil
@@ -214,6 +214,16 @@ public struct Game {
       piece = Piece(color: nextMoveColor, figure: .pawn)
     }
 
+    let promotedPiece: Piece?
+    if let pieceNotation = destinationNotation.last, pieceNotation.isUppercase {
+      guard let figure = Piece.Figure(rawValue: String(pieceNotation)), figure != .king, figure != .pawn else {
+        throw InvalidMove(notation: notation)
+      }
+      promotedPiece = Piece(color: nextMoveColor, figure: figure)
+      destinationNotation = destinationNotation.dropLast()
+    } else {
+      promotedPiece = nil
+    }
 
     let disambiguationFile: Square.File?
     let disambiguationRank: Square.Rank?
@@ -301,8 +311,12 @@ public struct Game {
     var mutableBoard = board
 
     // Move piece.
-    mutableBoard[origin] = nil
-    mutableBoard[destination] = piece
+    if let promotedPiece = promotedPiece {
+      mutableBoard[origin] = nil
+      mutableBoard[destination] = promotedPiece
+    } else {
+      mutableBoard[destination] = mutableBoard.removeValue(forKey: origin)
+    }
     // Account for en passant captures.
     if isEnPassantCapture {
       mutableBoard[enPassantCapture!] = nil
@@ -345,21 +359,14 @@ public struct Game {
 
     // To do: check for getting out of checkmate via en passant capture
     // to do: factor looking for check into moves from square
-    // to do: use "move" in place of "destination" ubiquitously
     if board.isCheckmate(color: nextMoveColor) {
-      outcome = .checkmate(victor: nextMoveColor)
       moves.removeLast()
       moves += [notation + "#"]
+      outcome = .checkmate(victor: nextMoveColor.opposite)
     }
   }
 
   private var outcome: Outcome?
-  
-  enum Outcome {
-    case checkmate(victor: Piece.Color)
-    case drawnGame(isStalemate: Bool)
-    case resignedGame(victor: Piece.Color)
-  }
 
   private var enPassantCapture: Square?
 
