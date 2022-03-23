@@ -15,30 +15,6 @@ fileprivate extension Square {
     case invalidRankIndex(index: String)
   }
 
-  var initialPiece: Piece? {
-    let figures: [File: Piece.Figure] = [
-      .a: .rook,
-      .b: .knight,
-      .c: .bishop,
-      .d: .queen,
-      .e: .king,
-      .f: .bishop,
-      .g: .knight,
-      .h: .rook
-    ]
-    switch (file, rank) {
-    case (let file, .one):
-      return Piece(color: .white, figure: figures[file]!)
-    case (_, .two):
-      return Piece(color: .white, figure: .pawn)
-    case (_, .seven):
-      return Piece(color: .black, figure: .pawn)
-    case (let file, .eight):
-      return Piece(color: .black, figure: figures[file]!)
-    default: return nil
-    }
-  }
-
   init(notation: String) throws {
     guard notation.count == 2 else {
       throw InvalidNotation.incorrectLength(length: notation.count)
@@ -408,10 +384,14 @@ extension Game: CustomStringConvertible {
 
 public extension Game.Board {
   static var defaultGameBoard: Game.Board {
-    Square.Rank.allCases.reduce(into: Game.Board()) { result, rank in
-      Square.File.allCases.forEach { file in
-        let square = Square(file: file, rank: rank)
-        result[square] = square.initialPiece
+    let allPieces: [Piece] = Piece.Color.allCases.flatMap { color in
+      Piece.Figure.allCases.map { figure in
+        Piece(color: color, figure: figure)
+      }
+    }
+    return allPieces.reduce(into: Game.Board()) { result, piece in
+      piece.startingSquares.forEach { square in
+        result[square] = piece
       }
     }
   }

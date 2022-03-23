@@ -60,7 +60,7 @@ private extension Optional where Wrapped == Square.VerticalDirection {
 /// Piece
 public struct Piece: Equatable {
   /// Color
-  public enum Color: String {
+  public enum Color: String, CaseIterable {
     case white
     case black
 
@@ -73,13 +73,32 @@ public struct Piece: Equatable {
   }
 
   /// Figure
-  public enum Figure: String {
+  public enum Figure: String, CaseIterable {
     case pawn = "X"
     case knight = "N"
     case bishop = "B"
     case rook = "R"
     case queen = "Q"
     case king = "K"
+  }
+
+  var startingSquares: [Square] {
+    switch (self.color, self.figure) {
+    case (let color, .pawn):
+      return Square.File.allCases.map { file in
+        Square(file: file, rank: color == .white ? .two : .seven)
+      }
+    case (let color, .rook):
+      return color == .white ? [.a1, .h1] : [.a8, .h8]
+    case (let color, .knight):
+      return color == .white ? [.b1, .g1] : [.b8, .g8]
+    case (let color, .bishop):
+      return color == .white ? [.c1, .f1] : [.c8, .f8]
+    case (let color, .queen):
+      return color == .white ? [.d1] : [.d8]
+    case (let color, .king):
+      return color == .white ? [.e1] : [.e8]
+    }
   }
 
   /// Color
