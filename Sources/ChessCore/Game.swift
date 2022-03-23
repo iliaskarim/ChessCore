@@ -61,6 +61,10 @@ fileprivate extension Square {
 public struct Game {
   public typealias Board = [Square: Piece]
 
+  struct InvalidMove: Error {
+    let notation: String
+  }
+
   enum Outcome {
     case checkmate(victor: Piece.Color)
     case drawnGame(isStalemate: Bool)
@@ -78,11 +82,8 @@ public struct Game {
     }
   }
 
-  struct InvalidMove: Error {
-    let notation: String
-  }
-
   private var board: Board
+  private var enPassantCapture: Square?
   private var isBlackKingMoved = false
   private var isWhiteKingMoved = false
   private var isNorthEastRookMoved = false
@@ -93,9 +94,10 @@ public struct Game {
     moves.count.isMultiple(of: 2) ? .white : .black
   }
   private var moves = [String]()
+  private var outcome: Outcome?
 
   public mutating func move(_ notation: String) throws {
-    let notation = notation.filter { $0 != "+" && $0 != "#" }
+    let notation = notation.filter { $0 != "+" && $0 != "#" } // TO DO: validate + / #
     guard notation.count > 0 else { return }
 
     switch (notation, nextMoveColor) {
@@ -115,261 +117,244 @@ public struct Game {
       return
 
     case ("O-O", .black):
-      guard !board.isCheck(color: .black), !isBlackKingMoved, !isNorthEastRookMoved else { break }
-      guard board[Square(file: .f, rank: .eight)] == nil else { break }
-      guard board[Square(file: .g, rank: .eight)] == nil else { break }
+      guard !board.isCheck(color: .black), !isBlackKingMoved, !isNorthEastRookMoved, board[.f8] == nil, board[.g8] == nil else {
+        throw InvalidMove(notation: notation)
+      }
 
       var mutableBoard = board
-      mutableBoard[Square(file: .f, rank: .eight)] = mutableBoard.removeValue(forKey: Square(file: .e, rank: .eight))
+      mutableBoard[.f8] = mutableBoard.removeValue(forKey: .e8)
       guard !mutableBoard.isCheck(color: .black) else { break }
 
-      mutableBoard[Square(file: .g, rank: .eight)] = mutableBoard.removeValue(forKey: Square(file: .f, rank: .eight))
+      mutableBoard[.g8] = mutableBoard.removeValue(forKey: .f8)
       guard !mutableBoard.isCheck(color: .black) else { break }
 
       moves += [notation]
       board = mutableBoard
-      board[Square(file: .h, rank: .eight)] = nil
-      board[Square(file: .f, rank: .eight)] = Piece(color: .black, figure: .rook)
+      board[.f8] = board.removeValue(forKey: .h8)
       return
 
     case ("O-O", .white):
-      guard !board.isCheck(color: .white), !isWhiteKingMoved, !isSouthEastRookMoved else { break }
-      guard board[Square(file: .f, rank: .one)] == nil else { break }
-      guard board[Square(file: .g, rank: .one)] == nil else { break }
+      guard !board.isCheck(color: .white), !isWhiteKingMoved, !isSouthEastRookMoved, board[.f1] == nil, board[.g1] == nil else {
+        throw InvalidMove(notation: notation)
+      }
 
       var mutableBoard = board
-      mutableBoard[Square(file: .e, rank: .one)] = nil
-      mutableBoard[Square(file: .f, rank: .one)] = Piece(color: .white, figure: .king)
+      mutableBoard[.f1] = mutableBoard.removeValue(forKey: .e1)
       guard !mutableBoard.isCheck(color: .white) else { break }
 
-      mutableBoard[Square(file: .f, rank: .one)] = nil
-      mutableBoard[Square(file: .g, rank: .one)] = Piece(color: .white, figure: .king)
+      mutableBoard[.g1] = mutableBoard.removeValue(forKey: .f1)
       guard !mutableBoard.isCheck(color: .white) else { break }
 
       moves += [notation]
       board = mutableBoard
-      board[Square(file: .h, rank: .one)] = nil
-      board[Square(file: .f, rank: .one)] = Piece(color: .white, figure: .rook)
+      board[.f1] = board.removeValue(forKey: .h1)
       return
 
     case ("O-O-O", .black):
-      guard !board.isCheck(color: .black), !isBlackKingMoved, !isNorthWestRookMoved else { break }
-      guard board[Square(file: .d, rank: .eight)] == nil else { break }
-      guard board[Square(file: .c, rank: .eight)] == nil else { break }
+      guard !board.isCheck(color: .black), !isBlackKingMoved, !isNorthWestRookMoved, board[.c8] == nil, board[.d8] == nil else {
+        throw InvalidMove(notation: notation)
+      }
 
       var mutableBoard = board
-      mutableBoard[Square(file: .e, rank: .eight)] = nil
-      mutableBoard[Square(file: .d, rank: .eight)] = Piece(color: .black, figure: .king)
+      mutableBoard[.d8] = mutableBoard.removeValue(forKey: .e8)
       guard !mutableBoard.isCheck(color: .black) else { return }
 
-      mutableBoard[Square(file: .d, rank: .eight)] = nil
-      mutableBoard[Square(file: .c, rank: .eight)] = Piece(color: .black, figure: .king)
+      mutableBoard[.c8] = mutableBoard.removeValue(forKey: .d8)
       guard !mutableBoard.isCheck(color: .black) else { return }
 
       moves += [notation]
       board = mutableBoard
-      board[Square(file: .a, rank: .eight)] = nil
-      board[Square(file: .e, rank: .eight)] = Piece(color: .black, figure: .rook)
+      board[.d8] = board.removeValue(forKey: .a8)
       return
 
     case ("O-O-O", .white):
-      guard !board.isCheck(color: .white), !isWhiteKingMoved, !isSouthWestRookMoved else { break }
-      guard board[Square(file: .d, rank: .one)] == nil else { break }
-      guard board[Square(file: .c, rank: .one)] == nil else { break }
+      guard !board.isCheck(color: .white), !isWhiteKingMoved, !isSouthWestRookMoved, board[.c1] == nil, board[.d1] == nil else {
+        throw InvalidMove(notation: notation)
+      }
 
       var mutableBoard = board
-      mutableBoard[Square(file: .e, rank: .one)] = nil
-      mutableBoard[Square(file: .d, rank: .one)] = Piece(color: .white, figure: .king)
+      mutableBoard[.d1] = mutableBoard.removeValue(forKey: .e1)
       guard !mutableBoard.isCheck(color: .white) else { return }
 
-      mutableBoard[Square(file: .d, rank: .one)] = nil
-      mutableBoard[Square(file: .c, rank: .one)] = Piece(color: .white, figure: .king)
+      mutableBoard[.c1] = mutableBoard.removeValue(forKey: .d1)
       guard !mutableBoard.isCheck(color: .white) else { return }
 
       moves += [notation]
       board = mutableBoard
-      board[Square(file: .a, rank: .one)] = nil
-      board[Square(file: .e, rank: .one)] = Piece(color: .white, figure: .rook)
-      return
+      board[.d1] = board.removeValue(forKey: .a1)
+      return // to do: assess outcome of game
 
     default:
-      break
-    }
+      let isCapture = notation.contains("x")
+      let filteredNotation = notation.filter { !["x", "+", "#"].contains($0) }
 
-    let isCapture = notation.contains("x")
-    let filteredNotation = notation.filter { !["x", "+", "#"].contains($0) }
-
-    let figureNotation = filteredNotation[filteredNotation.startIndex..<filteredNotation.index(after: filteredNotation.startIndex)]
-    let piece: Piece
-    var destinationNotation: Substring
-    if let figure = Piece.Figure(rawValue: String(figureNotation)) {
-      destinationNotation = filteredNotation[filteredNotation.index(after: filteredNotation.startIndex)..<filteredNotation.endIndex]
-      piece = Piece(color: nextMoveColor, figure: figure)
-    } else {
-      if isCapture {
+      let figureNotation = filteredNotation[filteredNotation.startIndex..<filteredNotation.index(after: filteredNotation.startIndex)]
+      let piece: Piece
+      var destinationNotation: Substring
+      if let figure = Piece.Figure(rawValue: String(figureNotation)) {
         destinationNotation = filteredNotation[filteredNotation.index(after: filteredNotation.startIndex)..<filteredNotation.endIndex]
+        piece = Piece(color: nextMoveColor, figure: figure)
       } else {
-        destinationNotation = filteredNotation[filteredNotation.startIndex..<filteredNotation.endIndex]
-      }
-      piece = Piece(color: nextMoveColor, figure: .pawn)
-    }
-
-    let promotedPiece: Piece?
-    if let pieceNotation = destinationNotation.last, pieceNotation.isUppercase {
-      guard let figure = Piece.Figure(rawValue: String(pieceNotation)), figure != .king, figure != .pawn else {
-        throw InvalidMove(notation: notation)
-      }
-      promotedPiece = Piece(color: nextMoveColor, figure: figure)
-      destinationNotation = destinationNotation.dropLast()
-    } else {
-      promotedPiece = nil
-    }
-
-    let disambiguationFile: Square.File?
-    let disambiguationRank: Square.Rank?
-    if destinationNotation.count == 4 {
-      guard let rankInt = Int(String(destinationNotation.first!)), let rank = Square.Rank(rawValue: rankInt) else {
-        throw InvalidMove(notation: notation)
-      }
-      disambiguationRank = rank
-
-      destinationNotation = destinationNotation.dropFirst()
-
-      guard let file = Square.File(rawValue: String(destinationNotation.first!)) else {
-        throw InvalidMove(notation: notation)
-      }
-      disambiguationFile = file
-
-      destinationNotation = destinationNotation.dropFirst()
-    } else if destinationNotation.count == 3 && Square.File.allCases.map(\.rawValue).contains(String(destinationNotation.first!)) {
-
-      disambiguationFile = Square.File(rawValue: String(destinationNotation.first!))!
-      disambiguationRank = nil
-
-      destinationNotation = destinationNotation.dropFirst()
-    } else if destinationNotation.count == 3 {
-      guard let rankInt = Int(String(destinationNotation.first!)), let rank = Square.Rank(rawValue: rankInt) else {
-        throw InvalidMove(notation: notation)
-      }
-
-      disambiguationFile = nil
-      disambiguationRank = rank
-    } else {
-      disambiguationFile = nil
-      disambiguationRank = nil
-    }
-
-    let destination = try Square(notation: String(destinationNotation))
-
-    var isEnPassantCapture: Bool
-    if isCapture {
-      switch nextMoveColor {
-      case .white:
-        if piece.figure == .pawn &&
-          destination.file == enPassantCapture?.file &&
-          destination.rank - 1 == enPassantCapture?.rank {
-          isEnPassantCapture = true
+        if isCapture {
+          destinationNotation = filteredNotation[filteredNotation.index(after: filteredNotation.startIndex)..<filteredNotation.endIndex]
         } else {
-          guard board[destination] != nil else {
-            throw InvalidMove(notation: notation)
-          }
-          isEnPassantCapture = false
+          destinationNotation = filteredNotation[filteredNotation.startIndex..<filteredNotation.endIndex]
         }
-      case .black:
-        if piece.figure == .pawn &&
-          destination.file == enPassantCapture?.file &&
-          destination.rank + 1 == enPassantCapture?.rank {
-          isEnPassantCapture = true
-        } else {
-          guard board[destination] != nil else {
-            throw InvalidMove(notation: notation)
+        piece = Piece(color: nextMoveColor, figure: .pawn)
+      }
+
+      let promotedPiece: Piece?
+      if let pieceNotation = destinationNotation.last, pieceNotation.isUppercase {
+        guard let figure = Piece.Figure(rawValue: String(pieceNotation)), figure != .king, figure != .pawn else {
+          throw InvalidMove(notation: notation)
+        }
+        promotedPiece = Piece(color: nextMoveColor, figure: figure)
+        destinationNotation = destinationNotation.dropLast()
+      } else {
+        promotedPiece = nil
+      }
+
+      let disambiguationFile: Square.File?
+      let disambiguationRank: Square.Rank?
+      if destinationNotation.count == 4 {
+        guard let rankInt = Int(String(destinationNotation.first!)), let rank = Square.Rank(rawValue: rankInt) else {
+          throw InvalidMove(notation: notation)
+        }
+        disambiguationRank = rank
+
+        destinationNotation = destinationNotation.dropFirst()
+
+        guard let file = Square.File(rawValue: String(destinationNotation.first!)) else {
+          throw InvalidMove(notation: notation)
+        }
+        disambiguationFile = file
+
+        destinationNotation = destinationNotation.dropFirst()
+      } else if destinationNotation.count == 3 && Square.File.allCases.map(\.rawValue).contains(String(destinationNotation.first!)) {
+
+        disambiguationFile = Square.File(rawValue: String(destinationNotation.first!))!
+        disambiguationRank = nil
+
+        destinationNotation = destinationNotation.dropFirst()
+      } else if destinationNotation.count == 3 {
+        guard let rankInt = Int(String(destinationNotation.first!)), let rank = Square.Rank(rawValue: rankInt) else {
+          throw InvalidMove(notation: notation)
+        }
+
+        disambiguationFile = nil
+        disambiguationRank = rank
+      } else {
+        disambiguationFile = nil
+        disambiguationRank = nil
+      }
+
+      let destination = try Square(notation: String(destinationNotation))
+
+      let isEnPassantCapture: Bool
+      if isCapture {
+        switch nextMoveColor {
+        case .white:
+          if piece.figure == .pawn &&
+            destination.file == enPassantCapture?.file &&
+            destination.rank - 1 == enPassantCapture?.rank {
+            isEnPassantCapture = true
+          } else {
+            guard board[destination] != nil else {
+              throw InvalidMove(notation: notation)
+            }
+            isEnPassantCapture = false
           }
-          isEnPassantCapture = false
+        case .black:
+          if piece.figure == .pawn &&
+            destination.file == enPassantCapture?.file &&
+            destination.rank + 1 == enPassantCapture?.rank {
+            isEnPassantCapture = true
+          } else {
+            guard board[destination] != nil else {
+              throw InvalidMove(notation: notation)
+            }
+            isEnPassantCapture = false
+          }
+        }
+      } else {
+        isEnPassantCapture = false
+      }
+
+      // Find eligible piece(s).
+      let pieces = board.filter { square, squarePiece in
+        guard squarePiece == piece else { return false }
+
+        let destinationSquares = isCapture ? board.capturesFromSquare(square) : board.movesFromSquare(square)
+        guard destinationSquares.contains(destination) else { return false }
+
+        if let disambiguationFile = disambiguationFile, square.file != disambiguationFile { return false }
+        if let disambiguationRank = disambiguationRank, square.rank != disambiguationRank { return false }
+
+        return true
+      }
+
+      guard let origin = pieces.first?.key, pieces.count == 1 else {
+        throw InvalidMove(notation: notation)
+      }
+
+      var mutableBoard = board
+
+      // Move piece.
+      if let promotedPiece = promotedPiece {
+        mutableBoard[origin] = nil
+        mutableBoard[destination] = promotedPiece
+      } else {
+        mutableBoard[destination] = mutableBoard.removeValue(forKey: origin)
+      }
+
+      // Account for en passant captures.
+      if isEnPassantCapture {
+        mutableBoard[enPassantCapture!] = nil
+      }
+
+      // Do not allow moving into check.
+      if mutableBoard.isCheck(color: nextMoveColor) {
+        throw InvalidMove(notation: notation)
+      }
+
+      board = mutableBoard
+
+      if piece.figure == .pawn && abs(origin.rank - destination.rank) == 2 {
+        enPassantCapture = destination
+      } else {
+        enPassantCapture = nil
+      }
+
+      if origin.file == .a && origin.rank == .one {
+        isSouthWestRookMoved = true
+      } else if origin.file == .a && origin.rank == .eight {
+        isNorthWestRookMoved = true
+      } else if origin.file == .h && origin.rank == .one {
+        isSouthEastRookMoved = true
+      } else if origin.file == .h && origin.rank == .eight {
+        isNorthEastRookMoved = true
+      } else if origin.file == .e {
+        if origin.rank == .one {
+          isWhiteKingMoved = true
+        } else if origin.rank == .eight {
+          isBlackKingMoved = true
         }
       }
-    } else {
-      isEnPassantCapture = false
-    }
-
-    let pieces = board.filter { square, squarePiece in
-      guard squarePiece == piece else { return false }
-      guard isCapture ? board.capturesFromSquare(square).contains(destination) : board.movesFromSquare(square).contains(destination) else { return false }
-
-      if let disambiguationFile = disambiguationFile, square.file != disambiguationFile {
-        return false
-      }
-      if let disambiguationRank = disambiguationRank, square.rank != disambiguationRank {
-        return false
-      }
-      return true
-    }
-
-    guard let origin = pieces.first?.key, pieces.count == 1 else {
-      throw InvalidMove(notation: notation)
-    }
-
-    var mutableBoard = board
-
-    // Move piece.
-    if let promotedPiece = promotedPiece {
-      mutableBoard[origin] = nil
-      mutableBoard[destination] = promotedPiece
-    } else {
-      mutableBoard[destination] = mutableBoard.removeValue(forKey: origin)
-    }
-    // Account for en passant captures.
-    if isEnPassantCapture {
-      mutableBoard[enPassantCapture!] = nil
-    }
-
-    // Do not allow moving into check.
-    if mutableBoard.isCheck(color: nextMoveColor) {
-      throw InvalidMove(notation: notation)
-    }
-
-    board = mutableBoard
-
-    if piece.figure == .pawn && abs(origin.rank - destination.rank) == 2 {
-      enPassantCapture = destination
-    } else {
-      enPassantCapture = nil
     }
 
     if board.isCheck(color: nextMoveColor.opposite) {
-      moves += [notation + "+"]
+      if board.isCheckmate(color: nextMoveColor.opposite) {
+        outcome = .checkmate(victor: nextMoveColor)
+        moves += [notation + "#"]
+      } else {
+        moves += [notation + "+"]
+      }
     } else {
       moves += [notation]
     }
-
-    if origin.file == .a && origin.rank == .one {
-      isSouthWestRookMoved = true
-    } else if origin.file == .a && origin.rank == .eight {
-      isNorthWestRookMoved = true
-    } else if origin.file == .h && origin.rank == .one {
-      isSouthEastRookMoved = true
-    } else if origin.file == .h && origin.rank == .eight {
-      isNorthEastRookMoved = true
-    } else if origin.file == .e {
-      if origin.rank == .one {
-        isWhiteKingMoved = true
-      } else if origin.rank == .eight {
-        isBlackKingMoved = true
-      }
-    }
-
-    // To do: check for getting out of checkmate via en passant capture
-    // to do: factor looking for check into moves from square
-    if board.isCheckmate(color: nextMoveColor) {
-      moves.removeLast()
-      moves += [notation + "#"]
-      outcome = .checkmate(victor: nextMoveColor.opposite)
-    }
   }
 
-  private var outcome: Outcome?
-
-  private var enPassantCapture: Square?
-
+  /// Designated initializer
   public init(board: Board = .defaultGameBoard) {
     self.board = board
   }

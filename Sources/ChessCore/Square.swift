@@ -7,6 +7,24 @@
 //
 
 public struct Square: Hashable {
+  static var a1 = Square(file: .a, rank: .one)
+  static var b1 = Square(file: .b, rank: .one)
+  static var c1 = Square(file: .c, rank: .one)
+  static var d1 = Square(file: .d, rank: .one)
+  static var e1 = Square(file: .e, rank: .one)
+  static var f1 = Square(file: .f, rank: .one)
+  static var g1 = Square(file: .g, rank: .one)
+  static var h1 = Square(file: .h, rank: .one)
+
+  static var a8 = Square(file: .a, rank: .eight)
+  static var b8 = Square(file: .b, rank: .eight)
+  static var c8 = Square(file: .c, rank: .eight)
+  static var d8 = Square(file: .d, rank: .eight)
+  static var e8 = Square(file: .e, rank: .eight)
+  static var f8 = Square(file: .f, rank: .eight)
+  static var g8 = Square(file: .g, rank: .eight)
+  static var h8 = Square(file: .h, rank: .eight)
+
   enum File: String, CaseIterable {
     case a
     case b
