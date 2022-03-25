@@ -9,7 +9,7 @@
 import Foundation
 
 fileprivate extension Square {
-  enum InvalidNotation: Error {
+  enum InvalidNotationError: Error {
     case incorrectLength(length: Int)
     case invalidFileName(name: String)
     case invalidRankIndex(index: String)
@@ -17,36 +17,36 @@ fileprivate extension Square {
 
   init(notation: String) throws {
     guard notation.count == 2 else {
-      throw InvalidNotation.incorrectLength(length: notation.count)
+      throw InvalidNotationError.incorrectLength(length: notation.count)
     }
 
-    let fileName = String(notation[notation.startIndex..<notation.index(notation.startIndex, offsetBy: 1)])
+    let fileName = String(notation.first!)
     guard let file = File(rawValue: fileName) else {
-      throw InvalidNotation.invalidFileName(name: fileName)
+      throw InvalidNotationError.invalidFileName(name: fileName)
     }
 
     let rankIndexString = notation[notation.index(notation.startIndex, offsetBy: 1)..<notation.endIndex]
     guard let rankIndex = Int(rankIndexString), let rank = Rank(rawValue: rankIndex) else {
-      throw InvalidNotation.invalidRankIndex(index: String(rankIndexString))
+      throw InvalidNotationError.invalidRankIndex(index: String(rankIndexString))
     }
 
     self.init(file: file, rank: rank)
   }
 }
 
+/// Game
 public struct Game {
+  /// Board
   public typealias Board = [Square: Piece]
 
-  struct InvalidMove: Error {
-    let notation: String
-  }
-
+  /// Outcome
   enum Outcome {
     case checkmate(victor: Piece.Color)
     case drawnGame(isStalemate: Bool)
     case resignedGame(victor: Piece.Color)
   }
 
+  /// Victor
   public var victor: Piece.Color? {
     guard let outcome = outcome else { return nil }
     switch outcome {
@@ -58,19 +58,15 @@ public struct Game {
     }
   }
 
-  private var board: Board
-  private var enPassantCapture: Square?
-  private var isBlackKingMoved = false
-  private var isWhiteKingMoved = false
-  private var isNorthEastRookMoved = false
-  private var isNorthWestRookMoved = false
-  private var isSouthEastRookMoved = false
-  private var isSouthWestRookMoved = false
-  private var nextMoveColor: Piece.Color {
-    moves.count.isMultiple(of: 2) ? .white : .black
+  struct InvalidMove: Error {
+    let notation: String
+    let underlyingError: Error?
+
+    init(notation: String, underlyingError: Error? = nil) {
+      self.notation = notation
+      self.underlyingError = underlyingError
+    }
   }
-  private var moves = [String]()
-  private var outcome: Outcome?
 
   public mutating func move(_ notation: String) throws {
     let notation = notation.filter { $0 != "+" && $0 != "#" } // TO DO: validate + / #
@@ -224,29 +220,35 @@ public struct Game {
         disambiguationRank = nil
       }
 
-      let destination = try Square(notation: String(destinationNotation))
+
+      let destinationSquare: Square
+      do {
+        destinationSquare = try Square(notation: String(destinationNotation))
+      } catch {
+        throw InvalidMove(notation: notation, underlyingError: error)
+      }
 
       let isEnPassantCapture: Bool
       if isCapture {
         switch nextMoveColor {
         case .white:
           if piece.figure == .pawn &&
-            destination.file == enPassantCapture?.file &&
-            destination.rank - 1 == enPassantCapture?.rank {
+            destinationSquare.file == enPassantCapture?.file &&
+            destinationSquare.rank - 1 == enPassantCapture?.rank {
             isEnPassantCapture = true
           } else {
-            guard board[destination] != nil else {
+            guard board[destinationSquare] != nil else {
               throw InvalidMove(notation: notation)
             }
             isEnPassantCapture = false
           }
         case .black:
           if piece.figure == .pawn &&
-            destination.file == enPassantCapture?.file &&
-            destination.rank + 1 == enPassantCapture?.rank {
+            destinationSquare.file == enPassantCapture?.file &&
+            destinationSquare.rank + 1 == enPassantCapture?.rank {
             isEnPassantCapture = true
           } else {
-            guard board[destination] != nil else {
+            guard board[destinationSquare] != nil else {
               throw InvalidMove(notation: notation)
             }
             isEnPassantCapture = false
@@ -261,7 +263,7 @@ public struct Game {
         guard squarePiece == piece else { return false }
 
         let destinationSquares = isCapture ? board.capturesFromSquare(square) : board.movesFromSquare(square)
-        guard destinationSquares.contains(destination) else { return false }
+        guard destinationSquares.contains(destinationSquare) else { return false }
 
         if let disambiguationFile = disambiguationFile, square.file != disambiguationFile { return false }
         if let disambiguationRank = disambiguationRank, square.rank != disambiguationRank { return false }
@@ -278,9 +280,9 @@ public struct Game {
       // Move piece.
       if let promotedPiece = promotedPiece {
         mutableBoard[origin] = nil
-        mutableBoard[destination] = promotedPiece
+        mutableBoard[destinationSquare] = promotedPiece
       } else {
-        mutableBoard[destination] = mutableBoard.removeValue(forKey: origin)
+        mutableBoard[destinationSquare] = mutableBoard.removeValue(forKey: origin)
       }
 
       // Account for en passant captures.
@@ -295,8 +297,8 @@ public struct Game {
 
       board = mutableBoard
 
-      if piece.figure == .pawn && abs(origin.rank - destination.rank) == 2 {
-        enPassantCapture = destination
+      if piece.figure == .pawn && abs(origin.rank - destinationSquare.rank) == 2 {
+        enPassantCapture = destinationSquare
       } else {
         enPassantCapture = nil
       }
@@ -329,6 +331,20 @@ public struct Game {
       moves += [notation]
     }
   }
+
+  private var board: Board
+  private var enPassantCapture: Square?
+  private var isBlackKingMoved = false
+  private var isWhiteKingMoved = false
+  private var isNorthEastRookMoved = false
+  private var isNorthWestRookMoved = false
+  private var isSouthEastRookMoved = false
+  private var isSouthWestRookMoved = false
+  private var nextMoveColor: Piece.Color {
+    moves.count.isMultiple(of: 2) ? .white : .black
+  }
+  private var moves = [String]()
+  private var outcome: Outcome?
 
   /// Designated initializer
   public init(board: Board = .defaultGameBoard) {

@@ -6,6 +6,7 @@
 //  Copyright © 2022 Ilias Karim. All rights reserved.
 //
 
+/// Square
 public struct Square: Hashable {
   static var a1 = Square(file: .a, rank: .one)
   static var b1 = Square(file: .b, rank: .one)
