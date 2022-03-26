@@ -6,7 +6,6 @@
 //  Copyright © 2022 Ilias Karim. All rights reserved.
 //
 
-/// A model representing a direction on the chess board.
 struct Direction {
   enum HorizontalAxis: Int, CaseIterable {
     case east = 1

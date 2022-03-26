@@ -8,6 +8,14 @@
 
 import Foundation
 
+// MARK: - Direction
+extension Direction {
+  static let northEast = Direction(horizontalAxis: .east, verticalAxis: .north)
+  static let northWest = Direction(horizontalAxis: .west, verticalAxis: .north)
+  static let southEast = Direction(horizontalAxis: .east, verticalAxis: .south)
+  static let southWest = Direction(horizontalAxis: .west, verticalAxis: .south)
+}
+
 // MARK: - Piece
 fileprivate extension Piece {
   var startingSquares: [Square] {
@@ -63,15 +71,8 @@ fileprivate extension Piece {
   }
 }
 
-extension Direction {
-  static let northEast = Direction(horizontalAxis: .east, verticalAxis: .north)
-  static let northWest = Direction(horizontalAxis: .west, verticalAxis: .north)
-  static let southEast = Direction(horizontalAxis: .east, verticalAxis: .south)
-  static let southWest = Direction(horizontalAxis: .west, verticalAxis: .south)
-}
-
 extension Optional where Wrapped == Piece {
-  func capturesFromSquare(_ square: Square) -> [[Square]] {
+  fileprivate func capturesFromSquare(_ square: Square) -> [[Square]] {
     guard let self = self else { return [] }
     if case .pawn = self.figure {
       let directions: [Direction] = (self.color == .black) ? [.southEast, .southWest] : [.northEast, .northWest]
@@ -106,7 +107,6 @@ fileprivate extension Square {
   static var f8 = Square(file: .f, rank: .eight)
   static var g8 = Square(file: .g, rank: .eight)
   static var h8 = Square(file: .h, rank: .eight)
-
 
   func allSquaresInDirection(_ direction: Direction) -> [Self] {
     guard let squareInDirection = squareInDirection(direction) else { return [] }
@@ -502,8 +502,8 @@ extension Game: CustomStringConvertible {
   }
 }
 
-public extension Game.Board {
-  static var defaultGameBoard: Game.Board {
+extension Game.Board {
+  public static var defaultGameBoard: Game.Board {
     let allPieces: [Piece] = Piece.Color.allCases.flatMap { color in
       Piece.Figure.allCases.map { figure in
         Piece(color: color, figure: figure)
@@ -515,10 +515,8 @@ public extension Game.Board {
       }
     }
   }
-}
 
-private extension Game.Board {
-  func capturesFromSquare(_ square: Square) -> [Square] {
+  fileprivate func capturesFromSquare(_ square: Square) -> [Square] {
     self[square].capturesFromSquare(square).compactMap { path in
       path.first { captureSquare in
         self[square]?.color == self[captureSquare]?.color.opposite
@@ -526,7 +524,7 @@ private extension Game.Board {
     }
   }
 
-  func isCheck(color: Piece.Color) -> Bool {
+  fileprivate func isCheck(color: Piece.Color) -> Bool {
     filter { $0.value.color == color.opposite }.contains { square in
       capturesFromSquare(square.key).contains { square in
         self[square] == Piece(color: color, figure: .king)
@@ -534,7 +532,7 @@ private extension Game.Board {
     }
   }
 
-  func isCheckmate(color: Piece.Color) -> Bool {
+  fileprivate func isCheckmate(color: Piece.Color) -> Bool {
     !contains { square, piece in
       piece.color == color && movesFromSquare(square).contains { targetSquare in
         var board = self
@@ -544,7 +542,7 @@ private extension Game.Board {
     }
   }
 
-  func movesFromSquare(_ square: Square) -> [Square] {
+  fileprivate func movesFromSquare(_ square: Square) -> [Square] {
     self[square]?.movesFromSquare(square).filter { !$0.isEmpty && self[$0[0]] == nil }.flatMap { sequence in
       sequence.prefix(through: (sequence.firstIndex { targetSquare in
         self[targetSquare] != nil
