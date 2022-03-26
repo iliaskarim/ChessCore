@@ -8,39 +8,6 @@
 
 import Foundation
 
-// MARK: - Directions
-private typealias Direction = (vertical: Vertical?, horizontal: Horizontal?)
-
-private enum Horizontal: Int, CaseIterable {
-  case east = 1
-  case west = -1
-
-  var direction: Direction {
-    (vertical: nil, horizontal: self)
-  }
-}
-
-private extension Optional where Wrapped == Horizontal {
-  var integerValue: Int {
-    self?.rawValue ?? 0
-  }
-}
-
-private enum Vertical: Int, CaseIterable {
-  case north = 1
-  case south = -1
-
-  var direction: Direction {
-    (vertical: self, horizontal: nil)
-  }
-}
-
-private extension Optional where Wrapped == Vertical {
-  var integerValue: Int {
-    self?.rawValue ?? 0
-  }
-}
-
 // MARK: - Piece
 fileprivate extension Piece {
   var startingSquares: [Square] {
@@ -68,7 +35,7 @@ fileprivate extension Piece {
   func movesFromSquare(_ square: Square) -> [[Square]] {
     switch self.figure {
     case .bishop:
-      return Square.diagonalDirections.map(square.allSquaresInDirection)
+      return Direction.diagonalDirections.map(square.allSquaresInDirection)
 
     case .knight:
       return [(-2, -1), (-2, 1), (2, -1), (2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2)]
@@ -77,10 +44,10 @@ fileprivate extension Piece {
         }.map { [$0] }
 
     case .king:
-      return Square.allDirections.compactMap(square.squareInDirection).map { [$0] }
+      return Direction.allDirections.compactMap(square.squareInDirection).map { [$0] }
 
     case .queen:
-      return Square.allDirections.map(square.allSquaresInDirection)
+      return Direction.allDirections.map(square.allSquaresInDirection)
 
     case .pawn:
       let direction = color == .white ? 1 : -1
@@ -91,27 +58,26 @@ fileprivate extension Piece {
       ].compactMap { $0 }.map { [$0] }
 
     case .rook:
-      return Square.cardinalDirections.map(square.allSquaresInDirection)
+      return Direction.cardinalDirections.map(square.allSquaresInDirection)
     }
   }
 }
 
+extension Direction {
+  static let northEast = Direction(horizontalAxis: .east, verticalAxis: .north)
+  static let northWest = Direction(horizontalAxis: .west, verticalAxis: .north)
+  static let southEast = Direction(horizontalAxis: .east, verticalAxis: .south)
+  static let southWest = Direction(horizontalAxis: .west, verticalAxis: .south)
+}
+
 extension Optional where Wrapped == Piece {
   func capturesFromSquare(_ square: Square) -> [[Square]] {
-    switch self?.figure {
-    case .some(.pawn):
-      let directions: [Direction]
-      switch self!.color {
-      case .black:
-        directions = [(.south, .east), (.south, .west)]
-      case .white:
-        directions = [(.north, .west), (.north, .east)]
-      }
+    guard let self = self else { return [] }
+    if case .pawn = self.figure {
+      let directions: [Direction] = (self.color == .black) ? [.southEast, .southWest] : [.northEast, .northWest]
       return directions.compactMap(square.squareInDirection).map { [$0] }
-
-    default:
-      return self?.movesFromSquare(square) ?? []
     }
+    return self.movesFromSquare(square)
   }
 }
 
@@ -123,13 +89,24 @@ fileprivate extension Square {
     case invalidRankIndex(index: String)
   }
 
-  static var allDirections = cardinalDirections + diagonalDirections
-  static var cardinalDirections: [Direction] = Horizontal.allCases.map(\.direction) + Vertical.allCases.map(\.direction)
-  static var diagonalDirections: [Direction] = Horizontal.allCases.flatMap { horizontalDirection in
-    Vertical.allCases.map { verticalDirection in
-      (verticalDirection, horizontalDirection)
-    }
-  }
+  static var a1 = Square(file: .a, rank: .one)
+  static var b1 = Square(file: .b, rank: .one)
+  static var c1 = Square(file: .c, rank: .one)
+  static var d1 = Square(file: .d, rank: .one)
+  static var e1 = Square(file: .e, rank: .one)
+  static var f1 = Square(file: .f, rank: .one)
+  static var g1 = Square(file: .g, rank: .one)
+  static var h1 = Square(file: .h, rank: .one)
+
+  static var a8 = Square(file: .a, rank: .eight)
+  static var b8 = Square(file: .b, rank: .eight)
+  static var c8 = Square(file: .c, rank: .eight)
+  static var d8 = Square(file: .d, rank: .eight)
+  static var e8 = Square(file: .e, rank: .eight)
+  static var f8 = Square(file: .f, rank: .eight)
+  static var g8 = Square(file: .g, rank: .eight)
+  static var h8 = Square(file: .h, rank: .eight)
+
 
   func allSquaresInDirection(_ direction: Direction) -> [Self] {
     guard let squareInDirection = squareInDirection(direction) else { return [] }
@@ -137,7 +114,7 @@ fileprivate extension Square {
   }
 
   func squareInDirection(_ direction: Direction) -> Self? {
-    Self.init(file: file + direction.horizontal.integerValue, rank: rank + direction.vertical.integerValue)
+    Self.init(file: file + direction.horizontalAxis.translation, rank: rank + direction.verticalAxis.translation)
   }
 
   init(notation: String) throws {
