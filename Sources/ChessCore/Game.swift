@@ -8,11 +8,138 @@
 
 import Foundation
 
+// MARK: - Directions
+private typealias Direction = (vertical: VerticalDirection?, horizontal: HorizontalDirection?)
+
+private enum HorizontalDirection: Int, CaseIterable {
+  case east = 1
+  case west = -1
+
+  var direction: Direction {
+    (vertical: nil, horizontal: self)
+  }
+}
+
+private extension Optional where Wrapped == HorizontalDirection {
+  var integerValue: Int {
+    self?.rawValue ?? 0
+  }
+}
+
+private enum VerticalDirection: Int, CaseIterable {
+  case north = 1
+  case south = -1
+
+  var direction: Direction {
+    (vertical: self, horizontal: nil)
+  }
+}
+
+private extension Optional where Wrapped == VerticalDirection {
+  var integerValue: Int {
+    self?.rawValue ?? 0
+  }
+}
+
+// MARK: - Piece
+fileprivate extension Piece {
+  var startingSquares: [Square] {
+    switch figure {
+    case .pawn:
+      return Square.File.allCases.map({ (file: $0, rank: color == .white ? .two : .seven) }).map(Square.init)
+
+    case .rook:
+      return color == .white ? [.a1, .h1] : [.a8, .h8]
+
+    case .knight:
+      return color == .white ? [.b1, .g1] : [.b8, .g8]
+
+    case .bishop:
+      return color == .white ? [.c1, .f1] : [.c8, .f8]
+
+    case .queen:
+      return color == .white ? [.d1] : [.d8]
+
+    case .king:
+      return color == .white ? [.e1] : [.e8]
+    }
+  }
+
+  func movesFromSquare(_ square: Square) -> [[Square]] {
+    switch self.figure {
+    case .bishop:
+      return Square.diagonalDirections.map(square.allSquaresInDirection)
+
+    case .knight:
+      return [(-2, -1), (-2, 1), (2, -1), (2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2)]
+        .compactMap { direction in
+          Square(file: square.file + direction.0, rank: square.rank + direction.1)
+        }.map { [$0] }
+
+    case .king:
+      return Square.allDirections.compactMap(square.squareInDirection).map { [$0] }
+
+    case .queen:
+      return Square.allDirections.map(square.allSquaresInDirection)
+
+    case .pawn:
+      let direction = color == .white ? 1 : -1
+      let startRank: Square.Rank = color == .white ? .two : .seven
+      return [
+        Square(file: square.file, rank: square.rank + direction),
+        (square.rank == startRank) ? Square(file: square.file, rank: square.rank + direction * 2) : nil
+      ].compactMap { $0 }.map { [$0] }
+
+    case .rook:
+      return Square.cardinalDirections.map(square.allSquaresInDirection)
+    }
+  }
+}
+
+extension Optional where Wrapped == Piece {
+  func capturesFromSquare(_ square: Square) -> [[Square]] {
+    guard let self = self else { return [] }
+
+    switch self.figure {
+    case .pawn:
+      let directions: [Direction]
+      switch self.color {
+      case .black:
+        directions = [(.south, .east), (.south, .west)]
+      case .white:
+        directions = [(.north, .west), (.north, .east)]
+      }
+      return directions.compactMap(square.squareInDirection).map { [$0] }
+
+    default:
+      return self.movesFromSquare(square)
+    }
+  }
+}
+
+// MARK: - Square
 fileprivate extension Square {
   enum InvalidNotationError: Error {
     case incorrectLength(length: Int)
     case invalidFileName(name: String)
     case invalidRankIndex(index: String)
+  }
+
+  static var allDirections = cardinalDirections + diagonalDirections
+  static var cardinalDirections: [Direction] = HorizontalDirection.allCases.map(\.direction) + VerticalDirection.allCases.map(\.direction)
+  static var diagonalDirections: [Direction] = HorizontalDirection.allCases.flatMap { horizontalDirection in
+    VerticalDirection.allCases.map { verticalDirection in
+      (verticalDirection, horizontalDirection)
+    }
+  }
+
+  func allSquaresInDirection(_ direction: Direction) -> [Self] {
+    guard let squareInDirection = squareInDirection(direction) else { return [] }
+    return [squareInDirection] + squareInDirection.allSquaresInDirection(direction)
+  }
+
+  func squareInDirection(_ direction: Direction) -> Self? {
+    Self.init(file: file + direction.horizontal.integerValue, rank: rank + direction.vertical.integerValue)
   }
 
   init(notation: String) throws {
@@ -34,10 +161,28 @@ fileprivate extension Square {
   }
 }
 
-/// Game
+// MARK: - Game
+
+/// A model representing a chess game.
+///
+/// Chess is a board game played between two players.
 public struct Game {
   /// Board
   public typealias Board = [Square: Piece]
+
+  /// Invalid move
+  struct InvalidMove: Error {
+    /// Notation
+    let notation: String
+
+    /// Underlying error
+    let underlyingError: Error?
+
+    init(notation: String, underlyingError: Error? = nil) {
+      self.notation = notation
+      self.underlyingError = underlyingError
+    }
+  }
 
   /// Outcome
   enum Outcome {
@@ -52,22 +197,16 @@ public struct Game {
     switch outcome {
     case let .checkmate(victor):
       return victor
+
     case let .resignedGame(victor):
       return victor
+      
     default: return nil
     }
   }
 
-  struct InvalidMove: Error {
-    let notation: String
-    let underlyingError: Error?
-
-    init(notation: String, underlyingError: Error? = nil) {
-      self.notation = notation
-      self.underlyingError = underlyingError
-    }
-  }
-
+  /// Move
+  /// - Parameter notation: Notation
   public mutating func move(_ notation: String) throws {
     let notation = notation.filter { $0 != "+" && $0 != "#" } // TO DO: validate + / #
     guard notation.count > 0 else { return }
@@ -340,9 +479,7 @@ public struct Game {
   private var isNorthWestRookMoved = false
   private var isSouthEastRookMoved = false
   private var isSouthWestRookMoved = false
-  private var nextMoveColor: Piece.Color {
-    moves.count.isMultiple(of: 2) ? .white : .black
-  }
+  private var nextMoveColor: Piece.Color { moves.count.isMultiple(of: 2) ? .white : .black }
   private var moves = [String]()
   private var outcome: Outcome?
 
@@ -354,7 +491,14 @@ public struct Game {
 
 extension Game: CustomStringConvertible {
   public var description: String {
-    let boardDescription = Square.Rank.allCases.reversed().map { rank in
+    (!moves.isEmpty ? stride(from: 0, to: moves.count, by: 2).map { i in
+      "\(i/2+1). "
+        .appending(moves[i])
+        .appending(moves.count > i+1 ? " \(moves[i+1])" : "")
+      }.joined(separator: "\n")
+    .appending("\n\n") : "")
+    .appending("  \(outcome?.description ?? nextMoveColor.rawValue.capitalized.appending(" to move"))\n\n")
+    .appending(Square.Rank.allCases.reversed().map { rank in
       " ".appending(String(rank.rawValue).appending(" ").appending(
         Square.File.allCases.map { file in
           if let piece = board[Square(file: file, rank: rank)] {
@@ -368,33 +512,7 @@ extension Game: CustomStringConvertible {
       Square.File.allCases.map { file in
         file.rawValue
       }.joined(separator: " ")
-    )
-
-    let state: String
-    switch outcome {
-    case let .checkmate(victor):
-      state = "\(victor.rawValue.capitalized) wins."
-    case .drawnGame(_):
-      state = "Drawn game"
-    case let .resignedGame(victor):
-      state = "\(victor.rawValue.capitalized) wins."
-    case .none:
-      switch nextMoveColor {
-      case .black:
-        state = "Black to move"
-      case .white:
-        state = "White to move"
-      }
-    }
-
-    return (!moves.isEmpty ? stride(from: 0, to: moves.count, by: 2).map { i in
-      "\(i/2+1). "
-        .appending(moves[i])
-        .appending(moves.count > i+1 ? " \(moves[i+1])" : "")
-      }.joined(separator: "\n")
-    .appending("\n\n") : "")
-    .appending("  \(state.description)\n\n")
-    .appending(boardDescription)
+    ))
     }
 }
 
@@ -413,28 +531,25 @@ public extension Game.Board {
   }
 }
 
-fileprivate extension Game.Board {
+extension Bool {
+  var not: Bool { return !self }
+}
+
+
+private extension Game.Board {
   func capturesFromSquare(_ square: Square) -> [Square] {
-    guard let piece = self[square] else { return [] }
-    return piece.capturesFromSquare(square).map { sequence -> [Square] in
-      guard let firstObstructedIndex = sequence.firstIndex(where: { move in
-        self[move] != nil
-      }) else {
-        return sequence
+    self[square].capturesFromSquare(square).compactMap { path in
+      path.first { captureSquare in
+        self[square]?.color == self[captureSquare]?.color.opposite
       }
-      return [Square](sequence[sequence.startIndex...firstObstructedIndex])
-    }.flatMap { $0 }.filter { move in
-      self[move]?.color != piece.color
     }
   }
 
   func isCheck(color: Piece.Color) -> Bool {
-    guard let kingsSquare = first(where: { _, piece in
-      piece == Piece(color: color, figure: .king)
-    })?.key else { return false }
-
-    return filter { $0.value.color == color.opposite }.contains { square in
-      capturesFromSquare(square.key).contains(kingsSquare)
+    filter { $0.value.color == color.opposite }.contains { square in
+      capturesFromSquare(square.key).contains { square in
+        self[square] == Piece(color: color, figure: .king)
+      }
     }
   }
 
@@ -463,3 +578,15 @@ fileprivate extension Game.Board {
   }
 }
 
+extension Game.Outcome: CustomStringConvertible {
+  var description: String {
+    switch self {
+    case let .checkmate(victor):
+      return "\(victor.rawValue.capitalized) wins."
+    case .drawnGame(_):
+      return "Game drawn."
+    case let .resignedGame(victor):
+      return "\(victor.rawValue.capitalized) wins."
+    }
+  }
+}

@@ -6,7 +6,7 @@
 //  Copyright © 2022 Ilias Karim. All rights reserved.
 //
 
-/// Square
+/// A model representing a square on a chess board.
 public struct Square: Hashable {
   static var a1 = Square(file: .a, rank: .one)
   static var b1 = Square(file: .b, rank: .one)
@@ -26,7 +26,8 @@ public struct Square: Hashable {
   static var g8 = Square(file: .g, rank: .eight)
   static var h8 = Square(file: .h, rank: .eight)
 
-  enum File: String, CaseIterable {
+  /// File
+  public enum File: String, CaseIterable {
     case a
     case b
     case c
@@ -37,7 +38,8 @@ public struct Square: Hashable {
     case h
   }
 
-  enum Rank: Int, CaseIterable {
+  /// Rank
+  public enum Rank: Int, CaseIterable {
     case one = 1
     case two
     case three
@@ -48,8 +50,17 @@ public struct Square: Hashable {
     case eight
   }
 
-  let file: File
-  let rank: Rank
+  /// File
+  public let file: File
+
+  /// Rank
+  public let rank: Rank
+
+  /// Desiignated initializer
+  public init(file: File, rank: Rank) {
+    self.file = file
+    self.rank = rank
+  }
 }
 
 extension Square {
