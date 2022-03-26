@@ -6,7 +6,7 @@
 //  Copyright © 2021 Ilias Karim. All rights reserved.
 //
 
-/// A model represeenting a chess spiece.
+/// A model representing a chess piece.
 public struct Piece: Equatable {
   /// Color
   public enum Color: String, CaseIterable {
