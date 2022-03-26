@@ -14,9 +14,14 @@ final class ChessTests: XCTestCase {
 
   func testA() throws {
     var game = Game(board: [Square(file: .a, rank: .seven): Piece(color: .white, figure: .pawn)])
+    print(game)
     try game.move("a8Q")
     print(game)
   }
+
+  // test en passant capture out of checkmate
+
+  // test check mate created from castling
 
   func testB() throws {
     var game = Game(board: [
@@ -25,6 +30,16 @@ final class ChessTests: XCTestCase {
     ])
     print(game)
     try game.move("axb8R")
+    print(game)
+  }
+
+  func testCrash() throws {
+    var game = Game(board: [
+      Square(file: .a, rank: .eight): Piece(color: .white, figure: .pawn),
+      Square(file: .b, rank: .one): Piece(color: .white, figure: .pawn)
+    ])
+    print(game)
+    try game.move("b2")
     print(game)
   }
 
