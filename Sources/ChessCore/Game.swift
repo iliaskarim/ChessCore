@@ -10,15 +10,15 @@ import Foundation
 
 // MARK: - Direction
 extension Direction {
-  static let northEast = Direction(horizontalAxis: .east, verticalAxis: .north)
-  static let northWest = Direction(horizontalAxis: .west, verticalAxis: .north)
-  static let southEast = Direction(horizontalAxis: .east, verticalAxis: .south)
-  static let southWest = Direction(horizontalAxis: .west, verticalAxis: .south)
+  fileprivate static let northEast = Direction(horizontalAxis: .east, verticalAxis: .north)
+  fileprivate static let northWest = Direction(horizontalAxis: .west, verticalAxis: .north)
+  fileprivate static let southEast = Direction(horizontalAxis: .east, verticalAxis: .south)
+  fileprivate static let southWest = Direction(horizontalAxis: .west, verticalAxis: .south)
 }
 
 // MARK: - Piece
-fileprivate extension Piece {
-  var startingSquares: [Square] {
+extension Piece {
+  fileprivate var startingSquares: [Square] {
     switch figure {
     case .pawn:
       return Square.File.allCases.map({ (file: $0, rank: color == .white ? .two : .seven) }).map(Square.init)
@@ -40,7 +40,7 @@ fileprivate extension Piece {
     }
   }
 
-  func movesFromSquare(_ square: Square) -> [[Square]] {
+  fileprivate func movesFromSquare(_ square: Square) -> [[Square]] {
     switch self.figure {
     case .bishop:
       return Direction.diagonalDirections.map(square.allSquaresInDirection)
@@ -83,53 +83,47 @@ extension Optional where Wrapped == Piece {
 }
 
 // MARK: - Square
-fileprivate extension Square {
-  enum InvalidNotationError: Error {
-    case incorrectLength(length: Int)
-    case invalidFileName(name: String)
-    case invalidRankIndex(index: String)
-  }
+extension Square {
+  fileprivate static var a1 = Square(file: .a, rank: .one)
+  fileprivate static var b1 = Square(file: .b, rank: .one)
+  fileprivate static var c1 = Square(file: .c, rank: .one)
+  fileprivate static var d1 = Square(file: .d, rank: .one)
+  fileprivate static var e1 = Square(file: .e, rank: .one)
+  fileprivate static var f1 = Square(file: .f, rank: .one)
+  fileprivate static var g1 = Square(file: .g, rank: .one)
+  fileprivate static var h1 = Square(file: .h, rank: .one)
 
-  static var a1 = Square(file: .a, rank: .one)
-  static var b1 = Square(file: .b, rank: .one)
-  static var c1 = Square(file: .c, rank: .one)
-  static var d1 = Square(file: .d, rank: .one)
-  static var e1 = Square(file: .e, rank: .one)
-  static var f1 = Square(file: .f, rank: .one)
-  static var g1 = Square(file: .g, rank: .one)
-  static var h1 = Square(file: .h, rank: .one)
+  fileprivate static var a8 = Square(file: .a, rank: .eight)
+  fileprivate static var b8 = Square(file: .b, rank: .eight)
+  fileprivate static var c8 = Square(file: .c, rank: .eight)
+  fileprivate static var d8 = Square(file: .d, rank: .eight)
+  fileprivate static var e8 = Square(file: .e, rank: .eight)
+  fileprivate static var f8 = Square(file: .f, rank: .eight)
+  fileprivate static var g8 = Square(file: .g, rank: .eight)
+  fileprivate static var h8 = Square(file: .h, rank: .eight)
 
-  static var a8 = Square(file: .a, rank: .eight)
-  static var b8 = Square(file: .b, rank: .eight)
-  static var c8 = Square(file: .c, rank: .eight)
-  static var d8 = Square(file: .d, rank: .eight)
-  static var e8 = Square(file: .e, rank: .eight)
-  static var f8 = Square(file: .f, rank: .eight)
-  static var g8 = Square(file: .g, rank: .eight)
-  static var h8 = Square(file: .h, rank: .eight)
-
-  func allSquaresInDirection(_ direction: Direction) -> [Self] {
+  fileprivate func allSquaresInDirection(_ direction: Direction) -> [Self] {
     guard let squareInDirection = squareInDirection(direction) else { return [] }
     return [squareInDirection] + squareInDirection.allSquaresInDirection(direction)
   }
 
-  func squareInDirection(_ direction: Direction) -> Self? {
+  fileprivate func squareInDirection(_ direction: Direction) -> Self? {
     Self.init(file: file + direction.horizontalAxis.translation, rank: rank + direction.verticalAxis.translation)
   }
 
-  init(notation: String) throws {
+  fileprivate init?(notation: String) {
     guard notation.count == 2 else {
-      throw InvalidNotationError.incorrectLength(length: notation.count)
+      return nil
     }
 
     let fileName = String(notation.first!)
     guard let file = File(rawValue: fileName) else {
-      throw InvalidNotationError.invalidFileName(name: fileName)
+      return nil
     }
 
     let rankIndexString = notation[notation.index(notation.startIndex, offsetBy: 1)..<notation.endIndex]
     guard let rankIndex = Int(rankIndexString), let rank = Rank(rawValue: rankIndex) else {
-      throw InvalidNotationError.invalidRankIndex(index: String(rankIndexString))
+      return nil
     }
 
     self.init(file: file, rank: rank)
@@ -146,17 +140,9 @@ public struct Game {
   public typealias Board = [Square: Piece]
 
   /// Invalid move
-  struct InvalidMove: Error {
+  public struct InvalidMove: Error {
     /// Notation
-    let notation: String
-
-    /// Underlying error
-    let underlyingError: Error?
-
-    init(notation: String, underlyingError: Error? = nil) {
-      self.notation = notation
-      self.underlyingError = underlyingError
-    }
+    public let notation: String
   }
 
   /// Outcome
@@ -354,11 +340,8 @@ public struct Game {
         disambiguationRank = nil
       }
 
-      let targetSquare: Square
-      do {
-        targetSquare = try Square(notation: String(destinationNotation))
-      } catch {
-        throw InvalidMove(notation: notation, underlyingError: error)
+      guard let targetSquare = Square(notation: String(destinationNotation)) else {
+        throw InvalidMove(notation: notation)
       }
 
       let isEnPassantCapture: Bool
