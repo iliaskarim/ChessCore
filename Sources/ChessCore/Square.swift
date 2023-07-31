@@ -38,7 +38,7 @@ public struct Square: Hashable {
   /// Rank
   public let rank: Rank
 
-  /// Desiignated initializer
+  /// Designated initializer
   public init(file: File, rank: Rank) {
     self.file = file
     self.rank = rank
