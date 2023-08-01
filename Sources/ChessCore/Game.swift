@@ -21,7 +21,9 @@ extension Piece {
   fileprivate var startingSquares: [Square] {
     switch figure {
     case .pawn:
-      return Square.File.allCases.map({ (file: $0, rank: color == .white ? .two : .seven) }).map(Square.init)
+      return Square.File.allCases.map { file in
+        Square(file: file, rank: color == .white ? .two : .seven) 
+      }
 
     case .rook:
       return color == .white ? [.a1, .h1] : [.a8, .h8]
