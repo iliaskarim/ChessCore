@@ -348,9 +348,6 @@ public struct Game {
             targetSquare.rank - 1 == enPassantCapture?.rank {
             isEnPassantCapture = true
           } else {
-            guard board[targetSquare] != nil else {
-              throw InvalidMove(notation: notation)
-            }
             isEnPassantCapture = false
           }
         case .black:
@@ -359,11 +356,11 @@ public struct Game {
             targetSquare.rank + 1 == enPassantCapture?.rank {
             isEnPassantCapture = true
           } else {
-            guard board[targetSquare] != nil else {
-              throw InvalidMove(notation: notation)
-            }
             isEnPassantCapture = false
           }
+        }
+        guard isEnPassantCapture || board[targetSquare] != nil else {
+          throw InvalidMove(notation: notation)
         }
       } else {
         isEnPassantCapture = false
