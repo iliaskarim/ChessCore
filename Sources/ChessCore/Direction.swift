@@ -11,14 +11,18 @@ struct Direction {
     case east = 1
     case west = -1
 
-    var direction: Direction { Direction(horizontalAxis: self, verticalAxis: nil) }
+    var direction: Direction { 
+      Direction(horizontalAxis: self, verticalAxis: nil)
+    }
   }
 
   enum VerticalAxis: Int, CaseIterable {
     case north = 1
     case south = -1
 
-    var direction: Direction { Direction(horizontalAxis: nil, verticalAxis: self) }
+    var direction: Direction { 
+      Direction(horizontalAxis: nil, verticalAxis: self)
+    }
   }
 
   static let allDirections = cardinalDirections + diagonalDirections
