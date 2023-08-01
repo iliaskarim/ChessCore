@@ -343,21 +343,13 @@ public struct Game {
       if isCapture {
         switch nextMoveColor {
         case .white:
-          if piece.figure == .pawn &&
+          isEnPassantCapture = piece.figure == .pawn &&
             targetSquare.file == enPassantCapture?.file &&
-            targetSquare.rank - 1 == enPassantCapture?.rank {
-            isEnPassantCapture = true
-          } else {
-            isEnPassantCapture = false
-          }
+            targetSquare.rank - 1 == enPassantCapture?.rank
         case .black:
-          if piece.figure == .pawn &&
+          isEnPassantCapture = piece.figure == .pawn &&
             targetSquare.file == enPassantCapture?.file &&
-            targetSquare.rank + 1 == enPassantCapture?.rank {
-            isEnPassantCapture = true
-          } else {
-            isEnPassantCapture = false
-          }
+            targetSquare.rank + 1 == enPassantCapture?.rank
         }
         guard isEnPassantCapture || board[targetSquare] != nil else {
           throw InvalidMove(notation: notation)
