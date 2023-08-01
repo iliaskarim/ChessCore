@@ -330,6 +330,7 @@ public struct Game {
         }
         disambiguationFile = nil
         disambiguationRank = rank
+        destinationNotation = destinationNotation.dropFirst()
       } else {
         disambiguationFile = nil
         disambiguationRank = nil
@@ -362,8 +363,8 @@ public struct Game {
       let pieces = board.filter { square, squarePiece in
         squarePiece == piece &&
         (isCapture ? board.capturesFromSquare(square) : board.movesFromSquare(square)).contains(targetSquare) &&
-        (square.file == disambiguationFile || disambiguationFile == nil) &&
-        (square.rank == disambiguationRank || disambiguationRank == nil)
+        (disambiguationFile == nil || square.file == disambiguationFile) &&
+        (disambiguationRank == nil || square.rank == disambiguationRank)
       }
 
       guard let origin = pieces.first?.key, pieces.count == 1 else {
