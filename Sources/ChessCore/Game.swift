@@ -313,26 +313,21 @@ public struct Game {
           throw InvalidMove(notation: notation)
         }
         disambiguationRank = rank
-
         destinationNotation = destinationNotation.dropFirst()
 
         guard let file = Square.File(rawValue: String(destinationNotation.first!)) else {
           throw InvalidMove(notation: notation)
         }
         disambiguationFile = file
-
         destinationNotation = destinationNotation.dropFirst()
       } else if destinationNotation.count == 3 && Square.File.allCases.map(\.rawValue).contains(String(destinationNotation.first!)) {
-
         disambiguationFile = Square.File(rawValue: String(destinationNotation.first!))!
         disambiguationRank = nil
-
         destinationNotation = destinationNotation.dropFirst()
       } else if destinationNotation.count == 3 {
         guard let rankInt = Int(String(destinationNotation.first!)), let rank = Square.Rank(rawValue: rankInt) else {
           throw InvalidMove(notation: notation)
         }
-
         disambiguationFile = nil
         disambiguationRank = rank
       } else {
