@@ -487,8 +487,8 @@ extension Game.Board {
   }
 
   fileprivate func capturesFromSquare(_ square: Square) -> [Square] {
-    self[square].capturesFromSquare(square).compactMap { path in
-      path.first { captureSquare in
+    self[square].capturesFromSquare(square).compactMap {
+      $0.first { captureSquare in
         self[square]?.color == self[captureSquare]?.color.opposite
       }
     }
@@ -513,11 +513,13 @@ extension Game.Board {
   }
 
   fileprivate func movesFromSquare(_ square: Square) -> [Square] {
-    self[square]?.movesFromSquare(square).filter { !$0.isEmpty && self[$0[0]] == nil }.flatMap { sequence in
-      sequence.prefix(through: (sequence.firstIndex { targetSquare in
+    self[square]?.movesFromSquare(square).filter { 
+      self[$0[0]] == nil
+    }.flatMap {
+      $0.prefix(through: ($0.firstIndex { targetSquare in
         self[targetSquare] != nil
-      } ?? sequence.index(before: sequence.endIndex)))
-    } ?? []//.filter { self[$0]?.color != self[square]!.color } ?? []
+      })!)
+    } ?? []
   }
 }
 
