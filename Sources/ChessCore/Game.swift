@@ -106,7 +106,7 @@ extension Square {
 
   fileprivate func allSquaresInDirection(_ direction: Direction) -> [Self]? {
     guard let squareInDirection = squareInDirection(direction) else { return nil }
-    return [squareInDirection] + squareInDirection.allSquaresInDirection(direction) ?? []
+    return [squareInDirection] + (squareInDirection.allSquaresInDirection(direction) ?? [])
   }
 
   fileprivate func squareInDirection(_ direction: Direction) -> Self? {
