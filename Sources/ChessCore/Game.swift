@@ -45,7 +45,7 @@ extension Piece {
   fileprivate func movesFromSquare(_ square: Square) -> [[Square]] {
     switch self.figure {
     case .bishop:
-      return Direction.diagonalDirections.map(square.allSquaresInDirection)
+      return Direction.diagonalDirections.compactMap(square.allSquaresInDirection)
 
     case .knight:
       return [(-2, -1), (-2, 1), (2, -1), (2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2)]
@@ -57,7 +57,7 @@ extension Piece {
       return Direction.allDirections.compactMap(square.squareInDirection).map { [$0] }
 
     case .queen:
-      return Direction.allDirections.map(square.allSquaresInDirection)
+      return Direction.allDirections.compactMap(square.allSquaresInDirection)
 
     case .pawn:
       let direction = color == .white ? 1 : -1
@@ -68,7 +68,7 @@ extension Piece {
       ].compactMap { $0 }.map { [$0] }
 
     case .rook:
-      return Direction.cardinalDirections.map(square.allSquaresInDirection)
+      return Direction.cardinalDirections.compactMap(square.allSquaresInDirection)
     }
   }
 }
@@ -104,8 +104,8 @@ extension Square {
   fileprivate static var g8 = Square(file: .g, rank: .eight)
   fileprivate static var h8 = Square(file: .h, rank: .eight)
 
-  fileprivate func allSquaresInDirection(_ direction: Direction) -> [Self] {
-    guard let squareInDirection = squareInDirection(direction) else { return [] }
+  fileprivate func allSquaresInDirection(_ direction: Direction) -> [Self]? {
+    guard let squareInDirection = squareInDirection(direction) else { return nil }
     return [squareInDirection] + squareInDirection.allSquaresInDirection(direction)
   }
 
