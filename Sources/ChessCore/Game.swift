@@ -516,9 +516,9 @@ extension Game.Board {
     self[square]?.movesFromSquare(square).filter { 
       self[$0[0]] == nil
     }.flatMap {
-      $0.prefix(through: ($0.firstIndex { targetSquare in
-        self[targetSquare] != nil
-      })!)
+      $0.prefix(through: $0.firstIndex {
+        self[$0] != nil
+      } ?? $0.index(before: $0.endIndex))
     } ?? []
   }
 }
