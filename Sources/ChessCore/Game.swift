@@ -1,11 +1,3 @@
-//
-//  Game.swift
-//  chess
-//
-//  Created by Ilias Karim on 7/15/21.
-//  Copyright © 2021 Ilias Karim. All rights reserved.
-//
-
 import Foundation
 
 // MARK: - Direction
@@ -171,9 +163,6 @@ public struct Game {
   /// Move
   /// - Parameter notation: Notation
   public mutating func move(_ notation: String) throws {
-    let notation = notation.filter { $0 != "+" && $0 != "#" } // TO DO: validate + / #
-    guard notation.count > 0 else { return }
-
     switch (notation, nextMoveColor) {
     case ("1-0", .black):
       moves += [notation]
@@ -271,9 +260,7 @@ public struct Game {
       board[.d1] = board.removeValue(forKey: .a1)
 
     default:
-      let isCapture = notation.contains("x") // to do: validate POSITION of the x
-      let isCheck = notation.contains("+") // to do: validate
-      let isCheckmate = notation.contains("#") // to do: validate
+      let isCapture = notation.contains("x")
       let filteredNotation = notation.filter { !["x", "+", "#"].contains($0) }
 
       let figureNotation = filteredNotation.first!
@@ -414,9 +401,9 @@ public struct Game {
     if board.isCheck(color: nextMoveColor.opposite) {
       if board.isCheckmate(color: nextMoveColor.opposite) {
         outcome = .checkmate(victor: nextMoveColor)
-        moves += [notation + "#"]
+        moves += [notation]
       } else {
-        moves += [notation + "+"]
+        moves += [notation]
       }
     } else {
       moves += [notation]
