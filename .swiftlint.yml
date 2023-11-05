@@ -1,0 +1,6 @@
+disabled_rules:
+  - identifier_name
+  - trailing_comma
+
+cyclomatic_complexity: 50
+function_body_length: 80
