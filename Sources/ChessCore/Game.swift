@@ -207,7 +207,6 @@ public struct Game {
         throw InvalidMove(notation: notation)
       }
 
-      moves += [notation]
       board = mutableBoard
       board[.f8] = board.removeValue(forKey: .h8)
 
@@ -228,7 +227,6 @@ public struct Game {
         throw InvalidMove(notation: notation)
       }
 
-      moves += [notation]
       board = mutableBoard
       board[.f1] = board.removeValue(forKey: .h1)
 
@@ -249,7 +247,6 @@ public struct Game {
         throw InvalidMove(notation: notation)
       }
 
-      moves += [notation]
       board = mutableBoard
       board[.d8] = board.removeValue(forKey: .a8)
 
@@ -270,7 +267,6 @@ public struct Game {
         throw InvalidMove(notation: notation)
       }
 
-      moves += [notation]
       board = mutableBoard
       board[.d1] = board.removeValue(forKey: .a1)
 
