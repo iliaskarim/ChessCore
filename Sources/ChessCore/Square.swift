@@ -1,11 +1,3 @@
-//
-//  Square.swift
-//  chess
-//
-//  Created by Ilias Karim on 3/18/22.
-//  Copyright © 2022 Ilias Karim. All rights reserved.
-//
-
 /// A model representing a square on a chess board.
 public struct Square: Hashable {
   /// File

@@ -2,10 +2,10 @@ import Foundation
 
 // MARK: - Direction
 extension Direction {
-  fileprivate static let northEast = Direction(horizontalAxis: .east, verticalAxis: .north)
-  fileprivate static let northWest = Direction(horizontalAxis: .west, verticalAxis: .north)
-  fileprivate static let southEast = Direction(horizontalAxis: .east, verticalAxis: .south)
-  fileprivate static let southWest = Direction(horizontalAxis: .west, verticalAxis: .south)
+  fileprivate static let northEast = Direction(horizontal: .east, vertical: .north)
+  fileprivate static let northWest = Direction(horizontal: .west, vertical: .north)
+  fileprivate static let southEast = Direction(horizontal: .east, vertical: .south)
+  fileprivate static let southWest = Direction(horizontal: .west, vertical: .south)
 }
 
 // MARK: - Piece
@@ -54,10 +54,10 @@ extension Piece {
     case .pawn:
       let direction = color == .white ? 1 : -1
       let startRank: Square.Rank = color == .white ? .two : .seven
-      return [
+      return [[
         Square(file: square.file, rank: square.rank + direction),
         (square.rank == startRank) ? Square(file: square.file, rank: square.rank + direction * 2) : nil
-      ].compactMap { $0 }.map { [$0] }
+      ].compactMap { $0 }]
 
     case .rook:
       return Direction.cardinalDirections.compactMap(square.allSquaresInDirection)
@@ -76,51 +76,59 @@ extension Optional where Wrapped == Piece {
   }
 }
 
+extension Piece.Figure {
+  fileprivate init?(_ character: Character) {
+    self.init(rawValue: String(character))
+  }
+}
+
 // MARK: - Square
 extension Square {
-  fileprivate static var a1 = Square(file: .a, rank: .one)
-  fileprivate static var b1 = Square(file: .b, rank: .one)
-  fileprivate static var c1 = Square(file: .c, rank: .one)
-  fileprivate static var d1 = Square(file: .d, rank: .one)
-  fileprivate static var e1 = Square(file: .e, rank: .one)
-  fileprivate static var f1 = Square(file: .f, rank: .one)
-  fileprivate static var g1 = Square(file: .g, rank: .one)
-  fileprivate static var h1 = Square(file: .h, rank: .one)
+  fileprivate static let a1 = Self.init(file: .a, rank: .one)
+  fileprivate static let b1 = Self.init(file: .b, rank: .one)
+  fileprivate static let c1 = Self.init(file: .c, rank: .one)
+  fileprivate static let d1 = Self.init(file: .d, rank: .one)
+  fileprivate static let e1 = Self.init(file: .e, rank: .one)
+  fileprivate static let f1 = Self.init(file: .f, rank: .one)
+  fileprivate static let g1 = Self.init(file: .g, rank: .one)
+  fileprivate static let h1 = Self.init(file: .h, rank: .one)
 
-  fileprivate static var a8 = Square(file: .a, rank: .eight)
-  fileprivate static var b8 = Square(file: .b, rank: .eight)
-  fileprivate static var c8 = Square(file: .c, rank: .eight)
-  fileprivate static var d8 = Square(file: .d, rank: .eight)
-  fileprivate static var e8 = Square(file: .e, rank: .eight)
-  fileprivate static var f8 = Square(file: .f, rank: .eight)
-  fileprivate static var g8 = Square(file: .g, rank: .eight)
-  fileprivate static var h8 = Square(file: .h, rank: .eight)
+  fileprivate static let a8 = Self.init(file: .a, rank: .eight)
+  fileprivate static let b8 = Self.init(file: .b, rank: .eight)
+  fileprivate static let c8 = Self.init(file: .c, rank: .eight)
+  fileprivate static let d8 = Self.init(file: .d, rank: .eight)
+  fileprivate static let e8 = Self.init(file: .e, rank: .eight)
+  fileprivate static let f8 = Self.init(file: .f, rank: .eight)
+  fileprivate static let g8 = Self.init(file: .g, rank: .eight)
+  fileprivate static let h8 = Self.init(file: .h, rank: .eight)
 
-  fileprivate func allSquaresInDirection(_ direction: Direction) -> [Self]? {
-    guard let squareInDirection = squareInDirection(direction) else { return nil }
-    return [squareInDirection] + (squareInDirection.allSquaresInDirection(direction) ?? [])
+  fileprivate func allSquaresInDirection(_ direction: Direction) -> [Self] {
+    guard let squareInDirection = squareInDirection(direction) else { return [] }
+    return [squareInDirection] + squareInDirection.allSquaresInDirection(direction)
   }
 
   fileprivate func squareInDirection(_ direction: Direction) -> Self? {
-    Self.init(file: file + direction.horizontalAxis.translation, rank: rank + direction.verticalAxis.translation)
+    Self.init(file: file + direction.horizontal.translation, rank: rank + direction.vertical.translation)
   }
 
   fileprivate init?(notation: String) {
-    guard notation.count == 2 else {
-      return nil
-    }
-
-    let fileName = String(notation.first!)
-    guard let file = File(rawValue: fileName) else {
-      return nil
-    }
-
-    let rankIndexString = notation[notation.index(notation.startIndex, offsetBy: 1)..<notation.endIndex]
-    guard let rankIndex = Int(rankIndexString), let rank = Rank(rawValue: rankIndex) else {
-      return nil
-    }
-
+    guard notation.count == 2 else { return nil }
+    guard let file = File(notation.first!) else { return nil }
+    guard let rank = Rank(notation.last!) else { return nil }
     self.init(file: file, rank: rank)
+  }
+}
+
+extension Square.File {
+  fileprivate init?(_ character: Character) {
+    self.init(rawValue: String(character))
+  }
+}
+
+extension Square.Rank {
+  fileprivate init?(_ character: Character) {
+    guard let int = Int(String(character)) else { return nil }
+    self.init(rawValue: int)
   }
 }
 
@@ -263,11 +271,10 @@ public struct Game {
       let isCapture = notation.contains("x")
       let filteredNotation = notation.filter { !["x", "+", "#"].contains($0) }
 
-      let figureNotation = filteredNotation.first!
       let nextIndex = filteredNotation.index(after: filteredNotation.startIndex)
       let piece: Piece
       var destinationNotation: Substring
-      if let figure = Piece.Figure(rawValue: String(figureNotation)) {
+      if let figure = Piece.Figure(filteredNotation.first!) {
         destinationNotation = filteredNotation[nextIndex..<filteredNotation.endIndex]
         piece = Piece(color: nextMoveColor, figure: figure)
       } else {
@@ -281,11 +288,11 @@ public struct Game {
 
       let promotedPiece: Piece?
       if let pieceNotation = destinationNotation.last, pieceNotation.isUppercase {
-        guard let figure = Piece.Figure(rawValue: String(pieceNotation)), figure != .king, figure != .pawn else {
+        guard let figure = Piece.Figure(pieceNotation), figure != .king, figure != .pawn else {
           throw InvalidMove(notation: notation)
         }
         promotedPiece = Piece(color: nextMoveColor, figure: figure)
-        destinationNotation = destinationNotation.dropLast()
+        destinationNotation = destinationNotation.dropLast(2)
       } else {
         promotedPiece = nil
       }
@@ -294,28 +301,31 @@ public struct Game {
       let disambiguationFile: Square.File?
       let disambiguationRank: Square.Rank?
       if destinationNotation.count == 4 {
-        guard let rankInt = Int(String(destinationNotation.first!)), let rank = Square.Rank(rawValue: rankInt) else {
+        guard let rank = Square.Rank(destinationNotation.first!) else {
           throw InvalidMove(notation: notation)
         }
         disambiguationRank = rank
         destinationNotation = destinationNotation.dropFirst()
 
-        guard let file = Square.File(rawValue: String(destinationNotation.first!)) else {
+        guard let file = Square.File(destinationNotation.first!) else {
           throw InvalidMove(notation: notation)
         }
         disambiguationFile = file
         destinationNotation = destinationNotation.dropFirst()
       } else if destinationNotation.count == 3 && Square.File.allCases.map(\.rawValue).contains(String(destinationNotation.first!)) {
-        disambiguationFile = Square.File(rawValue: String(destinationNotation.first!))!
+        disambiguationFile = Square.File(destinationNotation.first!)!
         disambiguationRank = nil
         destinationNotation = destinationNotation.dropFirst()
       } else if destinationNotation.count == 3 {
-        guard let rankInt = Int(String(destinationNotation.first!)), let rank = Square.Rank(rawValue: rankInt) else {
+        guard let rank = Square.Rank(destinationNotation.first!) else {
           throw InvalidMove(notation: notation)
         }
         disambiguationFile = nil
         disambiguationRank = rank
         destinationNotation = destinationNotation.dropFirst()
+      } else if piece.figure == .pawn {
+        disambiguationFile = Square.File(filteredNotation.first!)
+        disambiguationRank = nil
       } else {
         disambiguationFile = nil
         disambiguationRank = nil
@@ -470,10 +480,18 @@ extension Game.Board {
   }
 
   fileprivate func capturesFromSquare(_ square: Square) -> [Square] {
-    self[square].capturesFromSquare(square).compactMap {
-      $0.first { captureSquare in
-        self[square]?.color == self[captureSquare]?.color.opposite
+    let piece = self[square]
+    return piece.capturesFromSquare(square).compactMap { squares in
+      for position in squares {
+        let target = self[position]
+        guard target?.color != piece?.color else {
+          return nil
+        }
+        if target?.color == piece?.color.opposite {
+          return position
+        }
       }
+      return nil
     }
   }
 
@@ -496,12 +514,20 @@ extension Game.Board {
   }
 
   fileprivate func movesFromSquare(_ square: Square) -> [Square] {
-    self[square]?.movesFromSquare(square).filter { 
-      self[$0[0]] == nil
-    }.flatMap {
-      $0.prefix(through: $0.firstIndex {
-        self[$0] != nil
-      } ?? $0.index(before: $0.endIndex))
+    self[square]?.movesFromSquare(square).flatMap {
+      let upToIndex = $0.firstIndex {
+        self[$0]?.color == self[square]!.color
+      } ?? $0.endIndex
+
+      let throughIndex = $0.firstIndex {
+        self[$0]?.color == self[square]!.color.opposite
+      }
+
+      if let throughIndex = throughIndex, throughIndex < upToIndex {
+        return $0.prefix(through: throughIndex)
+      }
+
+      return $0.prefix(upTo: upToIndex)
     } ?? []
   }
 }

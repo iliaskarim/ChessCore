@@ -1,47 +1,39 @@
-//
-//  Direction.swift
-//  chess
-//
-//  Created by Ilias Karim on 3/26/22.
-//  Copyright © 2022 Ilias Karim. All rights reserved.
-//
-
 struct Direction {
-  enum HorizontalAxis: Int, CaseIterable {
+  enum Horizontal: Int, CaseIterable {
     case east = 1
     case west = -1
 
     var direction: Direction { 
-      Direction(horizontalAxis: self, verticalAxis: nil)
+      Direction(horizontal: self, vertical: nil)
     }
   }
 
-  enum VerticalAxis: Int, CaseIterable {
+  enum Vertical: Int, CaseIterable {
     case north = 1
     case south = -1
 
     var direction: Direction { 
-      Direction(horizontalAxis: nil, verticalAxis: self)
+      Direction(horizontal: nil, vertical: self)
     }
   }
 
   static let allDirections = cardinalDirections + diagonalDirections
-  static let cardinalDirections: [Direction] = HorizontalAxis.allCases.map(\.direction) + VerticalAxis.allCases.map(\.direction)
-  static let diagonalDirections: [Direction] = HorizontalAxis.allCases.flatMap { horizontalDirection in
-    VerticalAxis.allCases.map { verticalDirection in
-      Direction(horizontalAxis: horizontalDirection, verticalAxis: verticalDirection)
+  static let cardinalDirections: [Direction] = Horizontal.allCases.map(\.direction) + Vertical.allCases.map(\.direction)
+  static let diagonalDirections: [Direction] = Horizontal.allCases.flatMap { horizontalDirection in
+    Vertical.allCases.map { verticalDirection in
+      Direction(horizontal: horizontalDirection, vertical: verticalDirection)
     }
   }
 
-  let horizontalAxis: HorizontalAxis?
-  let verticalAxis: VerticalAxis?
+  let horizontal: Horizontal?
+  let vertical: Vertical?
 }
 
-extension Optional where Wrapped == Direction.HorizontalAxis {
+extension Optional where Wrapped == Direction.Horizontal {
   var translation: Int { self?.rawValue ?? 0 }
 }
 
-extension Optional where Wrapped == Direction.VerticalAxis {
+extension Optional where Wrapped == Direction.Vertical {
   var translation: Int { self?.rawValue ?? 0 }
 }
 
