@@ -1,8 +1,8 @@
 import Foundation
 
-// MARK: - Piece
-extension Piece {
-  fileprivate var startingPositions: [Position] {
+// MARK: Piece
+private extension Piece {
+  var startPositions: [Position] {
     switch figure {
     case .bishop:
       return color == .white ? [.c1, .f1] : [.c8, .f8]
@@ -26,7 +26,7 @@ extension Piece {
     }
   }
 
-  fileprivate func movesFromPosition(_ position: Position) -> [[Position]] {
+  func movesFromPosition(_ position: Position) -> [[Position]] {
     switch self.figure {
     case .bishop:
       let directions = Direction.allCases.filter { !Direction.cardinalDirections.contains($0) }
@@ -74,8 +74,8 @@ extension Piece {
   }
 }
 
-extension Optional where Wrapped == Piece {
-  fileprivate func capturesFromPosition(_ position: Position) -> [[Position]] {
+private extension Optional where Wrapped == Piece {
+  func capturesFromPosition(_ position: Position) -> [[Position]] {
     guard let self = self else { return [] }
     if case .pawn = self.figure {
       let directions: [Direction] = (self.color == .black) ? [.southEast, .southWest] : [.northEast, .northWest]
@@ -85,62 +85,124 @@ extension Optional where Wrapped == Piece {
   }
 }
 
-extension Piece.Figure {
-  fileprivate init?(_ character: Character) {
+private extension Piece.Figure {
+  init?(_ character: Character) {
     self.init(rawValue: String(character))
   }
 }
 
-// MARK: - Position
-extension Position {
-  fileprivate static let a1 = Self.init(file: .a, rank: .one)
-  fileprivate static let b1 = Self.init(file: .b, rank: .one)
-  fileprivate static let c1 = Self.init(file: .c, rank: .one)
-  fileprivate static let d1 = Self.init(file: .d, rank: .one)
-  fileprivate static let e1 = Self.init(file: .e, rank: .one)
-  fileprivate static let f1 = Self.init(file: .f, rank: .one)
-  fileprivate static let g1 = Self.init(file: .g, rank: .one)
-  fileprivate static let h1 = Self.init(file: .h, rank: .one)
+// MARK: Position
+private extension Position {
+  static let a1 = Self.init(file: .a, rank: .one)
 
-  fileprivate static let a8 = Self.init(file: .a, rank: .eight)
-  fileprivate static let b8 = Self.init(file: .b, rank: .eight)
-  fileprivate static let c8 = Self.init(file: .c, rank: .eight)
-  fileprivate static let d8 = Self.init(file: .d, rank: .eight)
-  fileprivate static let e8 = Self.init(file: .e, rank: .eight)
-  fileprivate static let f8 = Self.init(file: .f, rank: .eight)
-  fileprivate static let g8 = Self.init(file: .g, rank: .eight)
-  fileprivate static let h8 = Self.init(file: .h, rank: .eight)
+  static let b1 = Self.init(file: .b, rank: .one)
 
-  fileprivate func allPositionsInDirection(_ direction: Direction) -> [Self] {
+  static let c1 = Self.init(file: .c, rank: .one)
+
+  static let d1 = Self.init(file: .d, rank: .one)
+
+  static let e1 = Self.init(file: .e, rank: .one)
+
+  static let f1 = Self.init(file: .f, rank: .one)
+
+  static let g1 = Self.init(file: .g, rank: .one)
+
+  static let h1 = Self.init(file: .h, rank: .one)
+
+  static let a8 = Self.init(file: .a, rank: .eight)
+
+  static let b8 = Self.init(file: .b, rank: .eight)
+
+  static let c8 = Self.init(file: .c, rank: .eight)
+
+  static let d8 = Self.init(file: .d, rank: .eight)
+
+  static let e8 = Self.init(file: .e, rank: .eight)
+
+  static let f8 = Self.init(file: .f, rank: .eight)
+
+  static let g8 = Self.init(file: .g, rank: .eight)
+
+  static let h8 = Self.init(file: .h, rank: .eight)
+
+  func allPositionsInDirection(_ direction: Direction) -> [Self] {
     guard let positionInDirection = self + direction else { return [] }
     return [positionInDirection] + positionInDirection.allPositionsInDirection(direction)
   }
 
-  fileprivate init?(notation: String) {
+  init?(notation: String) {
     guard notation.count == 2 else { return nil }
     guard let file = File(notation.first!) else { return nil }
     guard let rank = Rank(notation.last!) else { return nil }
     self.init(file: file, rank: rank)
   }
+
+  init?(file: File?, rank: Rank?) {
+    guard let file = file, let rank = rank else {
+      return nil
+    }
+    self = Self.init(file: file, rank: rank)
+  }
 }
 
-extension Optional where Wrapped == Position {
-  fileprivate static func + (lhs: Position?, rhs: Direction) -> Position? {
+private extension Optional where Wrapped == Position {
+  static func + (lhs: Position?, rhs: Direction) -> Position? {
     guard let lhs = lhs else { return nil }
     return Position(file: lhs.file + rhs.longitudinalOffset, rank: lhs.rank + rhs.latitudinalOffset)
   }
 }
 
-extension Position.File {
-  fileprivate init?(_ character: Character) {
+private extension Position.File {
+  static func + (lhs: Position.File, rhs: Int) -> Position.File? {
+    Self.init(integerValue: lhs.integerValue + rhs)
+  }
+
+  static func - (lhs: Position.File, rhs: Int) -> Position.File? {
+    Self.init(integerValue: lhs.integerValue - rhs)
+  }
+
+  var integerValue: Int {
+    Self.allCases.firstIndex(of: self)! + 1
+  }
+
+  init?(integerValue: Int) {
+    guard Self.allCases.indices.contains(integerValue - 1) else {
+      return nil
+    }
+    self = Self.allCases[integerValue - 1]
+  }
+
+  init?(_ character: Character) {
     self.init(rawValue: String(character))
   }
 }
 
-extension Position.Rank {
-  fileprivate init?(_ character: Character) {
+private extension Position.Rank {
+  static func == (lhs: Position.Rank, rhs: Int) -> Bool {
+    lhs.rawValue == rhs
+  }
+
+  static func + (lhs: Position.Rank, rhs: Int) -> Position.Rank? {
+    Position.Rank(rawValue: lhs.rawValue + rhs)
+  }
+
+  static func - (lhs: Position.Rank, rhs: Int) -> Position.Rank? {
+    Position.Rank(rawValue: lhs.rawValue - rhs)
+  }
+
+  static func - (lhs: Position.Rank, rhs: Position.Rank) -> Int {
+    lhs.rawValue - rhs.rawValue
+  }
+
+  init?(_ character: Character) {
     guard let int = Int(String(character)) else { return nil }
     self.init(rawValue: int)
+  }
+}
+
+extension Position: CustomStringConvertible {
+  public var description: String {
+    file.rawValue.appending(String(rank.rawValue))
   }
 }
 
@@ -153,44 +215,32 @@ public struct Game {
   /// Board
   public typealias Board = [Position: Piece]
 
-  /// Invalid move
-  public struct InvalidMove: Error {
-    /// Notation
-    public let notation: String
-  }
-
-  /// Outcome
-  enum Outcome {
+  fileprivate enum Outcome {
     case checkmate(victor: Piece.Color)
     case drawnGame(isStalemate: Bool)
     case resignedGame(victor: Piece.Color)
   }
 
-  /// Victor
-  public var victor: Piece.Color? {
-    guard let outcome = outcome else { return nil }
-    switch outcome {
-    case let .checkmate(victor):
-      return victor
-
-    case let .resignedGame(victor):
-      return victor
-
-    default: return nil
-    }
+  private struct InvalidMove: Error {
+    /// Notation
+    public let notation: String
   }
 
   /// Move
   /// - Parameter notation: Notation
   public mutating func move(_ notation: String) throws {
     switch (notation, nextMoveColor) {
-    case ("1-0", .black):
-      moves += [notation]
+    case ("1-0", _):
+      if nextMoveColor == .black {
+        moves += [notation]
+      }
       outcome = .resignedGame(victor: .white)
       return
 
-    case ("0-1", .white):
-      moves += [notation]
+    case ("0-1", _):
+      if nextMoveColor == .white {
+        moves += [notation]
+      }
       outcome = .resignedGame(victor: .black)
       return
 
@@ -240,8 +290,8 @@ public struct Game {
       board[.f1] = board.removeValue(forKey: .h1)
 
     case ("O-O-O", .black):
-      guard !board.isCheck(color: .black), !kingsMoved.black, !rooksMoved.black.queenside, board[.c8] == nil,
-            board[.d8] == nil, board[.a8] == Piece(color: .black, figure: .rook) else {
+      guard !board.isCheck(color: .black), !kingsMoved.black, !rooksMoved.black.queenside, board[.d8] == nil,
+            board[.c8] == nil, board[.b8] == nil, board[.a8] == Piece(color: .black, figure: .rook) else {
         throw InvalidMove(notation: notation)
       }
 
@@ -260,8 +310,8 @@ public struct Game {
       board[.d8] = board.removeValue(forKey: .a8)
 
     case ("O-O-O", .white):
-      guard !board.isCheck(color: .white), !kingsMoved.white, !rooksMoved.white.queenside, board[.c1] == nil,
-            board[.d1] == nil, board[.a1] == Piece(color: .white, figure: .rook) else {
+      guard !board.isCheck(color: .white), !kingsMoved.white, !rooksMoved.white.queenside, board[.d1] == nil,
+            board[.c1] == nil, board[.b1] == nil, board[.a1] == Piece(color: .white, figure: .rook) else {
         throw InvalidMove(notation: notation)
       }
 
@@ -354,6 +404,7 @@ public struct Game {
           isEnPassantCapture = piece.figure == .pawn &&
             targetPosition.file == enPassantCapture?.file &&
             targetPosition.rank - 1 == enPassantCapture?.rank
+
         case .black:
           isEnPassantCapture = piece.figure == .pawn &&
             targetPosition.file == enPassantCapture?.file &&
@@ -410,13 +461,26 @@ public struct Game {
       enPassantCapture = piece.figure == .pawn && abs(origin.rank - targetPosition.rank) == 2 ? targetPosition : nil
 
       switch origin {
-      case .a1: rooksMoved.white.queenside = true
-      case .a8: rooksMoved.white.kingside = true
-      case .h1: rooksMoved.black.queenside = true
-      case .h8: rooksMoved.white.queenside = true
-      case .e1: kingsMoved.white = true
-      case .e8: kingsMoved.black = true
-      default: break
+      case .a1: 
+        rooksMoved.white.queenside = true
+
+      case .a8:
+        rooksMoved.black.queenside = true
+
+      case .h1:
+        rooksMoved.white.kingside = true
+
+      case .h8:
+        rooksMoved.black.kingside = true
+
+      case .e1:
+        kingsMoved.white = true
+
+      case .e8:
+        kingsMoved.black = true
+
+      default: 
+        break
       }
     }
 
@@ -432,17 +496,106 @@ public struct Game {
     }
   }
 
+  /// Designated initializer
+  public init(board: Board = .defaultBoard) {
+    self.board = board
+  }
+
   private var board: Board
+
   private var enPassantCapture: Position?
+
   private var kingsMoved = (black: false, white: false)
+
   private var rooksMoved = (black: (kingside: false, queenside: false), white: (kingside: false, queenside: false))
+
   private var nextMoveColor: Piece.Color { moves.count.isMultiple(of: 2) ? .white : .black }
+
   private var moves = [String]()
+
   private var outcome: Outcome?
 
-  /// Designated initializer
-  public init(board: Board = .defaultGameBoard) {
-    self.board = board
+  private var victor: Piece.Color? {
+    guard let outcome = outcome else { return nil }
+    switch outcome {
+    case let .checkmate(victor):
+      return victor
+
+    case let .resignedGame(victor):
+      return victor
+
+    default:
+      return nil
+    }
+  }
+}
+
+extension Game.Board {
+  public static var defaultBoard: Game.Board {
+    let allPieces: [Piece] = Piece.Color.allCases.flatMap { color in
+      Piece.Figure.allCases.map { figure in
+        Piece(color: color, figure: figure)
+      }
+    }
+    return allPieces.reduce(into: Game.Board()) { result, piece in
+      piece.startPositions.forEach { position in
+        result[position] = piece
+      }
+    }
+  }
+}
+
+private extension Game.Board {
+  func capturesFromPosition(_ position: Position) -> [Position] {
+    let piece = self[position]
+    return piece.capturesFromPosition(position).compactMap { positions in
+      for position in positions {
+        let target = self[position]
+        guard target?.color != piece?.color else {
+          return nil
+        }
+        if target?.color == piece?.color.opposite {
+          return position
+        }
+      }
+      return nil
+    }
+  }
+
+  func isCheck(color: Piece.Color) -> Bool {
+    filter { $0.value.color == color.opposite }.contains { position in
+      capturesFromPosition(position.key).contains { position in
+        self[position] == Piece(color: color, figure: .king)
+      }
+    }
+  }
+
+  func isCheckmate(color: Piece.Color) -> Bool {
+    !contains { position, piece in
+      piece.color == color && movesFromPosition(position).contains { targetPosition in
+        var board = self
+        board[targetPosition] = board.removeValue(forKey: position)
+        return !board.isCheck(color: color)
+      }
+    }
+  }
+
+  func movesFromPosition(_ position: Position) -> [Position] {
+    self[position]?.movesFromPosition(position).flatMap {
+      let upToIndex = $0.firstIndex {
+        self[$0]?.color == self[position]!.color
+      } ?? $0.endIndex
+
+      let throughIndex = $0.firstIndex {
+        self[$0]?.color == self[position]!.color.opposite
+      }
+
+      if let throughIndex = throughIndex, throughIndex < upToIndex {
+        return $0.prefix(through: throughIndex)
+      }
+
+      return $0.prefix(upTo: upToIndex)
+    } ?? []
   }
 }
 
@@ -477,80 +630,15 @@ extension Game: CustomStringConvertible {
   }
 }
 
-extension Game.Board {
-  public static var defaultGameBoard: Game.Board {
-    let allPieces: [Piece] = Piece.Color.allCases.flatMap { color in
-      Piece.Figure.allCases.map { figure in
-        Piece(color: color, figure: figure)
-      }
-    }
-    return allPieces.reduce(into: Game.Board()) { result, piece in
-      piece.startingPositions.forEach { position in
-        result[position] = piece
-      }
-    }
-  }
-
-  fileprivate func capturesFromPosition(_ position: Position) -> [Position] {
-    let piece = self[position]
-    return piece.capturesFromPosition(position).compactMap { positions in
-      for position in positions {
-        let target = self[position]
-        guard target?.color != piece?.color else {
-          return nil
-        }
-        if target?.color == piece?.color.opposite {
-          return position
-        }
-      }
-      return nil
-    }
-  }
-
-  fileprivate func isCheck(color: Piece.Color) -> Bool {
-    filter { $0.value.color == color.opposite }.contains { position in
-      capturesFromPosition(position.key).contains { position in
-        self[position] == Piece(color: color, figure: .king)
-      }
-    }
-  }
-
-  fileprivate func isCheckmate(color: Piece.Color) -> Bool {
-    !contains { position, piece in
-      piece.color == color && movesFromPosition(position).contains { targetPosition in
-        var board = self
-        board[targetPosition] = board.removeValue(forKey: position)
-        return !board.isCheck(color: color)
-      }
-    }
-  }
-
-  fileprivate func movesFromPosition(_ position: Position) -> [Position] {
-    self[position]?.movesFromPosition(position).flatMap {
-      let upToIndex = $0.firstIndex {
-        self[$0]?.color == self[position]!.color
-      } ?? $0.endIndex
-
-      let throughIndex = $0.firstIndex {
-        self[$0]?.color == self[position]!.color.opposite
-      }
-
-      if let throughIndex = throughIndex, throughIndex < upToIndex {
-        return $0.prefix(through: throughIndex)
-      }
-
-      return $0.prefix(upTo: upToIndex)
-    } ?? []
-  }
-}
-
 extension Game.Outcome: CustomStringConvertible {
   var description: String {
     switch self {
     case let .checkmate(victor):
       return "\(victor.rawValue.capitalized) wins."
+
     case .drawnGame:
       return "Game drawn."
+
     case let .resignedGame(victor):
       return "\(victor.rawValue.capitalized) wins."
     }
