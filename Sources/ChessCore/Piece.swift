@@ -1,11 +1,3 @@
-//
-//  Piece.swift
-//  chess
-//
-//  Created by Ilias Karim on 7/15/21.
-//  Copyright © 2021 Ilias Karim. All rights reserved.
-//
-
 /// A model representing a chess piece.
 public struct Piece: Equatable {
   /// Color

@@ -1,13 +1,5 @@
-//
-//  Square.swift
-//  chess
-//
-//  Created by Ilias Karim on 3/18/22.
-//  Copyright © 2022 Ilias Karim. All rights reserved.
-//
-
 /// A model representing a square on a chess board.
-public struct Square: Hashable {
+public struct Position: Hashable {
   /// File
   public enum File: String, CaseIterable {
     case a
@@ -45,7 +37,7 @@ public struct Square: Hashable {
   }
 }
 
-extension Square {
+extension Position {
   init?(file: File?, rank: Rank?) {
     guard let file = file, let rank = rank else {
       return nil
@@ -54,13 +46,13 @@ extension Square {
   }
 }
 
-extension Square: CustomStringConvertible {
+extension Position: CustomStringConvertible {
   public var description: String {
     file.rawValue.appending(String(rank.rawValue))
   }
 }
 
-extension Square.File {
+extension Position.File {
   var integerValue: Int {
     Self.allCases.firstIndex(of: self)! + 1
   }
@@ -72,29 +64,29 @@ extension Square.File {
     self = Self.allCases[integerValue - 1]
   }
 
-  static func + (lhs: Square.File, rhs: Int) -> Square.File? {
+  static func + (lhs: Position.File, rhs: Int) -> Position.File? {
     Self.init(integerValue: lhs.integerValue + rhs)
   }
 
-  static func - (lhs: Square.File, rhs: Int) -> Square.File? {
+  static func - (lhs: Position.File, rhs: Int) -> Position.File? {
     Self.init(integerValue: lhs.integerValue - rhs)
   }
 }
 
-extension Square.Rank {
-  static func == (lhs: Square.Rank, rhs: Int) -> Bool {
+extension Position.Rank {
+  static func == (lhs: Position.Rank, rhs: Int) -> Bool {
     lhs.rawValue == rhs
   }
 
-  static func + (lhs: Square.Rank, rhs: Int) -> Square.Rank? {
-    Square.Rank(rawValue: lhs.rawValue + rhs)
+  static func + (lhs: Position.Rank, rhs: Int) -> Position.Rank? {
+    Position.Rank(rawValue: lhs.rawValue + rhs)
   }
 
-  static func - (lhs: Square.Rank, rhs: Int) -> Square.Rank? {
-    Square.Rank(rawValue: lhs.rawValue - rhs)
+  static func - (lhs: Position.Rank, rhs: Int) -> Position.Rank? {
+    Position.Rank(rawValue: lhs.rawValue - rhs)
   }
 
-  static func - (lhs: Square.Rank, rhs: Square.Rank) -> Int {
+  static func - (lhs: Position.Rank, rhs: Position.Rank) -> Int {
     lhs.rawValue - rhs.rawValue
   }
 }
