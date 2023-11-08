@@ -1,13 +1,5 @@
 import Foundation
 
-// MARK: - Direction
-extension Direction {
-  fileprivate static let northEast = Direction(horizontal: .east, vertical: .north)
-  fileprivate static let northWest = Direction(horizontal: .west, vertical: .north)
-  fileprivate static let southEast = Direction(horizontal: .east, vertical: .south)
-  fileprivate static let southWest = Direction(horizontal: .west, vertical: .south)
-}
-
 // MARK: - Piece
 extension Piece {
   fileprivate var startingSquares: [Square] {
@@ -37,7 +29,8 @@ extension Piece {
   fileprivate func movesFromSquare(_ square: Square) -> [[Square]] {
     switch self.figure {
     case .bishop:
-      return Direction.diagonalDirections.compactMap(square.allSquaresInDirection)
+      let directions = Direction.allCases.filter { !Direction.cardinalDirections.contains($0) }
+      return directions.compactMap(square.allSquaresInDirection)
 
     case .knight:
       return [(-2, -1), (-2, 1), (2, -1), (2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2)]
@@ -46,10 +39,10 @@ extension Piece {
         }.map { [$0] }
 
     case .king:
-      return Direction.allDirections.compactMap(square.squareInDirection).map { [$0] }
+      return Direction.allCases.compactMap { square + $0 }.map { [$0] }
 
     case .queen:
-      return Direction.allDirections.compactMap(square.allSquaresInDirection)
+      return Direction.allCases.compactMap(square.allSquaresInDirection)
 
     case .pawn:
       let direction = color == .white ? 1 : -1
@@ -70,7 +63,7 @@ extension Optional where Wrapped == Piece {
     guard let self = self else { return [] }
     if case .pawn = self.figure {
       let directions: [Direction] = (self.color == .black) ? [.southEast, .southWest] : [.northEast, .northWest]
-      return directions.compactMap(square.squareInDirection).map { [$0] }
+      return directions.compactMap { square + $0 }.map { [$0] }
     }
     return self.movesFromSquare(square)
   }
@@ -102,13 +95,13 @@ extension Square {
   fileprivate static let g8 = Self.init(file: .g, rank: .eight)
   fileprivate static let h8 = Self.init(file: .h, rank: .eight)
 
-  fileprivate func allSquaresInDirection(_ direction: Direction) -> [Self] {
-    guard let squareInDirection = squareInDirection(direction) else { return [] }
-    return [squareInDirection] + squareInDirection.allSquaresInDirection(direction)
+  fileprivate static func +(lhs: Square, rhs: Direction) -> Square? {
+    Self.init(file: lhs.file + rhs.longitudinalOffset, rank: lhs.rank + rhs.latitudinalOffset)
   }
 
-  fileprivate func squareInDirection(_ direction: Direction) -> Self? {
-    Self.init(file: file + direction.horizontal.translation, rank: rank + direction.vertical.translation)
+  fileprivate func allSquaresInDirection(_ direction: Direction) -> [Self] {
+    guard let squareInDirection = self + direction else { return [] }
+    return [squareInDirection] + squareInDirection.allSquaresInDirection(direction)
   }
 
   fileprivate init?(notation: String) {

@@ -1,39 +1,36 @@
-struct Direction {
-  enum Horizontal: Int, CaseIterable {
-    case east = 1
-    case west = -1
+enum Direction: CaseIterable {
+  static let cardinalDirections: [Self] = [.east, .north, .south, .west]
+  static let latitudinalDirections: [Self] = [.north, .south]
+  static let longitudinalDirections: [Self] = [.east, .west]
 
-    var direction: Direction { 
-      Direction(horizontal: self, vertical: nil)
+  case east
+  case north
+  case northEast
+  case northWest
+  case south
+  case southEast
+  case southWest
+  case west
+
+  var latitudinalOffset: Int {
+    switch self {
+    case .east, .west:
+      return 0
+    case .north, .northEast, .northWest:
+      return 1
+    case .south, .southEast, .southWest:
+      return -1
     }
   }
 
-  enum Vertical: Int, CaseIterable {
-    case north = 1
-    case south = -1
-
-    var direction: Direction { 
-      Direction(horizontal: nil, vertical: self)
+  var longitudinalOffset: Int {
+    switch self {
+    case .east, .northEast, .southEast:
+      return 1
+    case .north, .south:
+      return 0
+    case .west, .northWest, .southWest:
+      return -1
     }
   }
-
-  static let allDirections = cardinalDirections + diagonalDirections
-  static let cardinalDirections: [Direction] = Horizontal.allCases.map(\.direction) + Vertical.allCases.map(\.direction)
-  static let diagonalDirections: [Direction] = Horizontal.allCases.flatMap { horizontalDirection in
-    Vertical.allCases.map { verticalDirection in
-      Direction(horizontal: horizontalDirection, vertical: verticalDirection)
-    }
-  }
-
-  let horizontal: Horizontal?
-  let vertical: Vertical?
 }
-
-extension Optional where Wrapped == Direction.Horizontal {
-  var translation: Int { self?.rawValue ?? 0 }
-}
-
-extension Optional where Wrapped == Direction.Vertical {
-  var translation: Int { self?.rawValue ?? 0 }
-}
-
