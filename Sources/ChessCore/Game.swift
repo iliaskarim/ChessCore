@@ -4,25 +4,25 @@ import Foundation
 extension Piece {
   fileprivate var startingPositions: [Position] {
     switch figure {
+    case .bishop:
+      return color == .white ? [.c1, .f1] : [.c8, .f8]
+
+    case .king:
+      return color == .white ? [.e1] : [.e8]
+
+    case .knight:
+      return color == .white ? [.b1, .g1] : [.b8, .g8]
+
     case .pawn:
       return Position.File.allCases.map { file in
         Position(file: file, rank: color == .white ? .two : .seven) 
       }
 
-    case .rook:
-      return color == .white ? [.a1, .h1] : [.a8, .h8]
-
-    case .knight:
-      return color == .white ? [.b1, .g1] : [.b8, .g8]
-
-    case .bishop:
-      return color == .white ? [.c1, .f1] : [.c8, .f8]
-
     case .queen:
       return color == .white ? [.d1] : [.d8]
 
-    case .king:
-      return color == .white ? [.e1] : [.e8]
+    case .rook:
+      return color == .white ? [.a1, .h1] : [.a8, .h8]
     }
   }
 
@@ -32,17 +32,30 @@ extension Piece {
       let directions = Direction.allCases.filter { !Direction.cardinalDirections.contains($0) }
       return directions.compactMap(position.allPositionsInDirection)
 
-    case .knight:
-      return [(-2, -1), (-2, 1), (2, -1), (2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2)]
-        .compactMap { direction in
-          Position(file: position.file + direction.0, rank: position.rank + direction.1)
-        }.map { [$0] }
-
     case .king:
       return Direction.allCases.compactMap { position + $0 }.map { [$0] }
 
-    case .queen:
-      return Direction.allCases.compactMap(position.allPositionsInDirection)
+    case .knight:
+      let directions: [[Direction]] = [
+        [.east, .northEast],
+        [.east, .southEast],
+        [.north, .northEast],
+        [.north, .northWest],
+        [.south, .southEast],
+        [.south, .southWest],
+        [.west, .northWest],
+        [.west, .southWest]
+      ]
+      return directions.reduce(into: [Position]()) { positions, directions in
+          var position: Position? = position
+          for direction in directions {
+            position = position + direction
+          }
+          if let position = position {
+            positions += [position]
+          }
+        }
+      .map { [$0] }
 
     case .pawn:
       let direction = color == .white ? 1 : -1
@@ -51,6 +64,9 @@ extension Piece {
         Position(file: position.file, rank: position.rank + direction),
         (position.rank == startRank) ? Position(file: position.file, rank: position.rank + direction * 2) : nil
       ].compactMap { $0 }]
+
+    case .queen:
+      return Direction.allCases.compactMap(position.allPositionsInDirection)
 
     case .rook:
       return Direction.cardinalDirections.compactMap(position.allPositionsInDirection)
@@ -95,10 +111,6 @@ extension Position {
   fileprivate static let g8 = Self.init(file: .g, rank: .eight)
   fileprivate static let h8 = Self.init(file: .h, rank: .eight)
 
-  fileprivate static func +(lhs: Position, rhs: Direction) -> Position? {
-    Self.init(file: lhs.file + rhs.longitudinalOffset, rank: lhs.rank + rhs.latitudinalOffset)
-  }
-
   fileprivate func allPositionsInDirection(_ direction: Direction) -> [Self] {
     guard let positionInDirection = self + direction else { return [] }
     return [positionInDirection] + positionInDirection.allPositionsInDirection(direction)
@@ -109,6 +121,13 @@ extension Position {
     guard let file = File(notation.first!) else { return nil }
     guard let rank = Rank(notation.last!) else { return nil }
     self.init(file: file, rank: rank)
+  }
+}
+
+extension Optional where Wrapped == Position {
+  fileprivate static func + (lhs: Position?, rhs: Direction) -> Position? {
+    guard let lhs = lhs else { return nil }
+    return Position(file: lhs.file + rhs.longitudinalOffset, rank: lhs.rank + rhs.latitudinalOffset)
   }
 }
 
