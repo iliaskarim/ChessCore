@@ -1,4 +1,4 @@
-/// A model representing a translation on a chess board.
+
 struct Vector {
   /// File translation
   let files: Int
