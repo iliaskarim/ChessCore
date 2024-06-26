@@ -1,20 +1,13 @@
 /// A model representing a chess piece.
 public struct Piece: Equatable {
   /// Color
-  public enum Color: String, CaseIterable {
+  enum Color: String, CaseIterable {
     case white
     case black
-
-    var opposite: Color {
-      switch self {
-      case .white: return .black
-      case .black: return .white
-      }
-    }
   }
 
   /// Figure
-  public enum Figure: String, CaseIterable {
+  enum Figure: String, CaseIterable {
     case bishop = "B"
     case king = "K"
     case knight = "N"
@@ -24,8 +17,8 @@ public struct Piece: Equatable {
   }
 
   /// Color
-  public let color: Color
+  let color: Color
 
   /// Figure
-  public let figure: Figure
+  let figure: Figure
 }
