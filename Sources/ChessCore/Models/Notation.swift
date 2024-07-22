@@ -1,26 +1,7 @@
 
-enum Notation {
-//  enum GameEnd {
-//    case draw
-//    case resignation(color: Piece.Color)
-//
-//    fileprivate init?(_ string: String) {
-//      switch string {
-//      case "1-0":
-//        self = .resignation(color: .black)
-//
-//      case "0-1":
-//        self = .resignation(color: .white)
-//
-//      case "1/2-1/2":
-//        self = .draw
-//
-//      default:
-//        return nil
-//      }
-//    }
-//  }
+// MARK: - Notation
 
+enum Notation {
   struct Gameplay {
     enum Play {
       case castle(side: Board.Side)
@@ -54,10 +35,10 @@ enum Notation {
       }
 
       switch string {
-      case "O-O":
+      case .kingsideCastle:
         play = .castle(side: .kingside)
 
-      case "O-O-O":
+      case .queensideCastle:
         play = .castle(side: .queenside)
 
       default:
@@ -66,13 +47,13 @@ enum Notation {
           string = String(string.dropFirst())
         }
 
-        let isCapture = string.contains("x")
-        string = string.replacingOccurrences(of: "x", with: "")
+        let isCapture = string.contains(String.capture)
+        string = string.replacingOccurrences(of: String.capture, with: "")
 
         let promotion = string.last.map(Piece.Figure.init) ?? nil
         if promotion != nil {
           string = String(string.dropLast())
-          guard string.last == "=" else {
+          guard string.last == Character(String.promotion) else {
             return nil
           }
           string = String(string.dropLast())
@@ -123,13 +104,13 @@ enum Notation {
 
   init?(string: String) {
     switch string {
-    case "1-0":
+    case .whiteWins:
       self = .end(victor: .white)
 
-    case "0-1":
+    case .blackWins:
       self = .end(victor: .black)
 
-    case "1/2-1/2":
+    case .drawGame:
       self = .end(victor: nil)
 
     default:

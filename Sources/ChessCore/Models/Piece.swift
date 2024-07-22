@@ -1,6 +1,6 @@
 
 /// A model representing a chess piece.
-public struct Piece {
+public struct Piece: Equatable {
   /// Color
   enum Color: String, CaseIterable {
     case white

@@ -1,4 +1,6 @@
 
+// MARK: - Square
+
 /// A model representing a square on a chess board.
 public struct Square: Hashable {
   /// File
@@ -45,10 +47,14 @@ public struct Square: Hashable {
 }
 
 extension Square {
-  static func + (lhs: Square, rhs: Vector) -> Square? {
+  static func + (lhs: Self, rhs: Vector) -> Self? {
     guard let file = File(rawValue: lhs.file.rawValue + rhs.files), let rank = Rank(rawValue: lhs.rank.rawValue + rhs.ranks) else {
       return nil
     }
     return .init(file: file, rank: rank)
+  }
+
+  static func - (lhs: Self, rhs: Vector) -> Self? {
+    lhs + Vector(files: -1 * rhs.files, ranks: -1 * rhs.ranks)
   }
 }

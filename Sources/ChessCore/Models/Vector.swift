@@ -1,4 +1,6 @@
 
+// MARK: - Vector
+
 struct Vector {
   /// File translation
   let files: Int
