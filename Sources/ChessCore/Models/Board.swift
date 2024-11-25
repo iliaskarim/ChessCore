@@ -21,11 +21,6 @@ public struct Board {
       }
     }
   }
-
-  enum Side {
-    case kingside
-    case queenside
-  }
   
   let pieces: [Square: Piece]
 

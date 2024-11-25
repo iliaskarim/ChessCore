@@ -62,9 +62,11 @@ private extension Board {
   func isCheck(color: Piece.Color) -> Bool {
     pieces.filter { _, piece in
       piece.color == color.opposite
-    }.flatMap { originSquare, _ in
-      moves(.capture(originSquare: originSquare))
-    }.contains(kingsSquare(color: color))
+    }.flatMap { square, _ in
+      moves(.capture(originSquare: square))
+    }.contains { targetSquare in
+      pieces[targetSquare] == .init(color: color, figure: .king)
+    }
   }
 
   func isCheckmate(color: Piece.Color) -> Bool {
@@ -83,39 +85,31 @@ private extension Board {
     let mutations: [Mutation]
 
     switch play {
-    case let .castle(side):
-      let kingsSquare = kingsSquare(color: color)
-
-      let castlePath = (side == .kingside ? [1, 2] : [-1, -2]).compactMap { files in
-        kingsSquare + Vector(files: files)
-      }
-
-      let openSquares: [Square]
-      if let openSquare = kingsSquare - Vector(files: 3), side == .queenside {
-        openSquares = castlePath + [openSquare]
-      } else {
-        openSquares = castlePath
-      }
-
-      let kingsFile = kingsSquare.file
-      let rooksSquare = pieces.filter { square, piece in
-        guard piece == .init(color: color, figure: .rook) else {
-          return false
-        }
-
-        let file = square.file
-        return side == .kingside ? file > kingsFile : file < kingsFile
-      }.first?.key
-
-      guard let rooksSquare, !openSquares.contains(where: pieces.keys.contains), !squaresTouched.contains(kingsSquare),
-              !squaresTouched.contains(rooksSquare), !isCheck(color: color) else {
+    case let .castle(castle):
+      guard !isCheck(color: color) else {
         return nil
       }
 
+      let rank: Square.Rank = color == .black ? .eight : .one
+      guard !(castle == .long ? [.b, .c, .d] : [.f, .g]).map({ file in
+        Square(file: file, rank: rank)
+      }).contains(where: pieces.keys.contains) else {
+        return nil
+      }
+
+      let kingOriginSquare = Square(file: .e, rank: rank)
+      let rookOriginSquare = Square(file: castle == .long ? .a : .h, rank: rank)
+      for (figure, square) in [Piece.Figure.king: kingOriginSquare, Piece.Figure.rook: rookOriginSquare] {
+        guard !squaresTouched.contains(square), pieces[square] == .init(color: color, figure: figure) else {
+          return nil
+        }
+      }
+
+      let rookTargetSquare = Square(file: castle == .long ? .d : .f, rank: rank)
       mutations = [
-        (originSquare: kingsSquare, targetSquare: castlePath[0], promotion: nil),
-        (originSquare: castlePath[0], targetSquare: castlePath[1], promotion: nil),
-        (originSquare: rooksSquare, targetSquare: castlePath[0], promotion: nil),
+        (originSquare: kingOriginSquare, targetSquare: rookTargetSquare, promotion: nil),
+        (originSquare: rookTargetSquare, targetSquare: .init(file: castle == .long ?.c : .g, rank: rank), promotion: nil),
+        (originSquare: rookOriginSquare, targetSquare: rookTargetSquare, promotion: nil)
       ]
 
     case let .translation(disambiguationFile, disambiguationRank, figure, isCapture, promotion, targetSquare):
@@ -135,22 +129,37 @@ private extension Board {
         return moves(isCapture ? .capture(originSquare: square) : .move(originSquare: square)).contains(targetSquare)
       }
 
-      guard let originSquare = eligibleSquares.first?.0, eligibleSquares.count == 1 else {
+      guard eligibleSquares.count == 1 else {
+        return nil
+      }
+
+      guard let originSquare = eligibleSquares.first?.0 else {
         return nil
       }
 
       let figure = pieces[originSquare]!.figure
-      let invalidPromotions = [Piece.Figure.king, Piece.Figure.pawn]
-      let promotionRanks = [Square.Rank.allCases.first!, Square.Rank.allCases.last!]
+      let promotionRank: Square.Rank = color == .black ? .one : .eight
 
       // Pawns must be promoted when they reach the end of the board.
-      if figure == .pawn, promotionRanks.contains(targetSquare.rank), promotion == nil {
+      if figure == .pawn, targetSquare.rank == promotionRank, promotion == nil {
         return nil
       }
 
-      // Only pawns can be promoted and only when they reach the end of the board.
-      if let promotion, figure != .pawn || !promotionRanks.contains(targetSquare.rank) || invalidPromotions.contains(promotion) {
-        return nil
+      if let promotion {
+        // Only pawns can be promoted .
+        if figure != .pawn {
+          return nil
+        }
+
+        // only when they reach the end of the board
+        if targetSquare.rank != promotionRank {
+          return nil
+        }
+
+        // and they must be promoted to knight, bishop, rook or queen.
+        if [Piece.Figure.king, Piece.Figure.pawn].contains(promotion) {
+          return nil
+        }
       }
 
       mutations = [(originSquare: originSquare, targetSquare: targetSquare, promotion: promotion)]
@@ -163,12 +172,6 @@ private extension Board {
     return mutatedBoard
   }
 
-  private func kingsSquare(color: Piece.Color) -> Square {
-    pieces.first { square, piece in
-      piece == .init(color: color, figure: .king)
-    }!.key
-  }
-
   private func moves(_ move: Move) -> [Square] {
     let isCapture: Bool
     if case .capture = move {
@@ -178,7 +181,6 @@ private extension Board {
     }
     let isUnmoved = !squaresTouched.contains(move.originSquare)
     let piece = pieces[move.originSquare]!
-
     return piece.moves(originSquare: move.originSquare, isCapture: isCapture, isUnmoved: isUnmoved).flatMap { path in
       let collision: (offset: Int, piece: Piece)? = path.enumerated().first { _, targetSquare in
         pieces[targetSquare] != nil
@@ -260,8 +262,14 @@ extension Notation.Gameplay: CustomStringConvertible {
 extension Notation.Gameplay.Play: CustomStringConvertible {
   var description: String {
     switch self {
-    case let .castle(side):
-      return side == .kingside ? .kingsideCastle : .queensideCastle
+    case let .castle(castle):
+      switch castle {
+      case .long:
+        return .castleLong
+
+      case .short:
+        return .castleShort
+      }
 
     case let .translation(disambiguationFile, disambiguationRank, figure, isCapture, promotion, targetSquare):
       let disambiguation = (disambiguationFile?.description ?? "").appending(disambiguationRank?.description ?? "")
@@ -340,7 +348,7 @@ private extension Piece {
 extension Piece: CustomStringConvertible {
   public var description: String {
     let description = figure == .pawn ? "P" : figure.rawValue
-    return color == .white ? description : description.lowercased()
+    return color == .black ? description.lowercased() : description
   }
 }
 

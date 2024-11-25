@@ -4,7 +4,12 @@
 enum Notation {
   struct Gameplay {
     enum Play {
-      case castle(side: Board.Side)
+      enum Castle {
+        case long
+        case short
+      }
+
+      case castle(castle: Castle)
       case translation(disambiguationFile: Square.File?, disambiguationRank: Square.Rank?, figure: Piece.Figure,
                        isCapture: Bool, promotion: Piece.Figure?, targetSquare: Square)
     }
@@ -35,11 +40,11 @@ enum Notation {
       }
 
       switch string {
-      case .kingsideCastle:
-        play = .castle(side: .kingside)
+      case .castleLong:
+        play = .castle(castle: .long)
 
-      case .queensideCastle:
-        play = .castle(side: .queenside)
+      case .castleShort:
+        play = .castle(castle: .short)
 
       default:
         let figure = (string.first.map(Piece.Figure.init) ?? nil) ?? .pawn
