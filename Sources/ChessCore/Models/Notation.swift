@@ -94,7 +94,7 @@ enum Notation {
           disambiguationRank = nil
         }
 
-        guard let targetSquare = Square(notation: String(string)) else {
+        guard let targetSquare = Square(String(string)) else {
           return nil
         }
 

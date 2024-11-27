@@ -38,8 +38,8 @@ public struct Square: Hashable {
   } 
   
   /// Convenience initializer
-  init?(notation: String) {
-    guard let file = notation.first.map(File.init) ?? nil, let rank = notation.last.map(Rank.init) ?? nil, notation.count == 2 else {
+  public init?(_ string: String) {
+    guard let file = string.first.map(File.init) ?? nil, let rank = string.last.map(Rank.init) ?? nil, string.count == 2 else {
       return nil
     }
     self.init(file: file, rank: rank)

@@ -7,21 +7,6 @@
 public struct Board {
   typealias Mutation = (originSquare: Square, targetSquare: Square, promotion: Piece.Figure?)
 
-  enum Move {
-    case move(originSquare: Square)
-    case capture(originSquare: Square)
-
-    var originSquare: Square {
-      switch self {
-      case let .move(originSquare):
-        return originSquare
-
-      case let .capture(originSquare):
-        return originSquare
-      }
-    }
-  }
-  
   let pieces: [Square: Piece]
 
   let squaresTouched: [Square]
