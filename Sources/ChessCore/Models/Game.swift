@@ -45,19 +45,13 @@ public extension Board {
 }
 
 private extension Board {
-  func isCheck(color: Piece.Color) -> Bool {
-    pieces.filter { _, piece in
-      piece.color != color
-    }.flatMap { square, _ in
-      moves(from: square, isCapture: true)
-    }.contains { targetSquare in
-      pieces[targetSquare] == .init(color: color, figure: .king)
-    }
+  var isCheckmate: Bool {
+    isCheck(color: moveColor) && isNoMovePossible
   }
 
-  func isCheckmate(color: Piece.Color) -> Bool {
+  var isNoMovePossible: Bool {
     !pieces.filter { _, piece in
-      piece.color == color
+      piece.color == moveColor
     }.flatMap { square, _ in
       (moves(from: square, isCapture: false) + moves(from: square, isCapture: true)).map { targetSquare in
         Mutation(originSquare: square, targetSquare: targetSquare, promotion: nil)
@@ -67,100 +61,19 @@ private extension Board {
     }
   }
 
-  func mutated(play: Notation.Gameplay.Play, moveColor color: Piece.Color) throws -> Board {
-    let mutations: [Mutation]
-
-    switch play {
-    case let .castle(castle):
-      guard !isCheck(color: color) else {
-        throw IllegalMove.cannotCastle(.inCheck)
-      }
-
-      let rank: Square.Rank = color == .black ? .eight : .one
-      guard !(castle == .long ? [.b, .c, .d] : [.f, .g]).map({ file in
-        Square(file: file, rank: rank)
-      }).contains(where: pieces.keys.contains) else {
-        throw IllegalMove.cannotCastle(.obstructed)
-      }
-
-      let kingOriginSquare = Square(file: .e, rank: rank)
-      let rookOriginSquare = Square(file: castle == .long ? .a : .h, rank: rank)
-      for (figure, square) in [Piece.Figure.king: kingOriginSquare, Piece.Figure.rook: rookOriginSquare] {
-        guard pieces[square] == .init(color: color, figure: figure) else {
-          throw IllegalMove.cannotCastle(.pieceOutOfPosition(figure: figure))
-        }
-
-        guard !squaresTouched.contains(square) else {
-          throw IllegalMove.cannotCastle(.pieceMoved(figure: figure))
-        }
-      }
-
-      let rookTargetSquare = Square(file: castle == .long ? .d : .f, rank: rank)
-      mutations = [
-        (originSquare: kingOriginSquare, targetSquare: rookTargetSquare, promotion: nil),
-        (originSquare: rookTargetSquare, targetSquare: .init(file: castle == .long ?.c : .g, rank: rank), promotion: nil),
-        (originSquare: rookOriginSquare, targetSquare: rookTargetSquare, promotion: nil)
-      ]
-
-    case let .translation(disambiguationFile, disambiguationRank, figure, isCapture, promotion, targetSquare):
-      let eligibleSquares: [Square] = pieces.compactMap { square, piece in
-        guard piece == .init(color: color, figure: figure) else {
-          return nil
-        }
-
-        if let disambiguationFile, square.file != disambiguationFile {
-          return nil
-        }
-
-        if let disambiguationRank, square.rank != disambiguationRank {
-          return nil
-        }
-
-        return moves(from: square, isCapture: isCapture).contains(targetSquare) ? square : nil
-      }
-
-      guard let originSquare = eligibleSquares.first else {
-        throw InvalidNotation.noPossiblePiece
-      }
-
-      guard eligibleSquares.count == 1 else {
-        throw InvalidNotation.ambiguous
-      }
-
-      // Pawns must be promoted when they reach the end of the board.
-      let promotionRank: Square.Rank = color == .black ? .one : .eight
-      guard promotion != nil || figure != .pawn || targetSquare.rank != promotionRank else {
-        throw IllegalMove.figureMustPromote
-      }
-
-      if let promotion {
-        // Only pawns can be promoted .
-        guard figure == .pawn else {
-          throw IllegalMove.figureCannotPromote
-        }
-
-        // only when they reach the end of the board
-        guard targetSquare.rank == promotionRank else {
-          throw IllegalMove.mustReachEndOfBoardToPromote
-        }
-
-        // and they must be promoted to bishop, knight, rook or queen.
-        guard ![Piece.Figure.king, Piece.Figure.pawn].contains(promotion) else {
-          throw IllegalMove.cannotPromoteToFigure
-        }
-      }
-
-      mutations = [(originSquare: originSquare, targetSquare: targetSquare, promotion: promotion)]
-    }
-
-    guard let mutatedBoard = mutatedBoard(mutations: mutations) else {
-      throw IllegalMove.cannotMoveIntoCheck
-    }
-
-    return mutatedBoard
+  var moveColor: Piece.Color {
+    moves.count.isMultiple(of: 2) ? .white : .black
   }
 
-  private func moves(from originSquare: Square, isCapture: Bool) -> [Square] {
+  func isCheck(color: Piece.Color) -> Bool {
+    pieces.flatMap { square, _ in
+      moves(from: square, isCapture: true)
+    }.contains { targetSquare in
+      pieces[targetSquare] == .init(color: color, figure: .king)
+    }
+  }
+
+  func moves(from originSquare: Square, isCapture: Bool) -> [Square] {
     let piece = pieces[originSquare]!
     let paths = isCapture ? piece.capturePaths(from: originSquare) : piece.movePaths(from: originSquare)
     return paths.flatMap { path in
@@ -168,7 +81,7 @@ private extension Board {
         pieces[square] != nil
       }
 
-      // Non-capture moves can move a piece up to the first obstruction in its path or the end of the piece's path.
+      // Non-capture moves can move a piece up to the first obstruction in its path or the end of the path if its unobstructed.
       guard isCapture else {
         return path.prefix(upTo: obstruction?.0 ?? path.endIndex)
       }
@@ -182,12 +95,12 @@ private extension Board {
         return [path.first!]
       }
 
-      // All other captures take the first obstruction in the moving piece's capture path, unless it is obstructed by a same color piece.
+      // All other captures take the first opposing piece in the path.
       return path[obstruction.0 ..< obstruction.0 + 1]
     }
   }
 
-  private func mutatedBoard(mutations: [Mutation]) -> Self? {
+  func mutatedBoard(mutations: [Mutation]) -> Self? {
     mutations.reduce(self) { board, mutation in
       guard let board else {
         return nil
@@ -197,25 +110,25 @@ private extension Board {
       let piece = board.pieces[mutation.originSquare]!
       var pieces = board.pieces
       pieces[mutation.originSquare] = nil
-      if let enPassant = mutation.targetSquare - piece.forwardUnitVector, piece.figure == .pawn,
-          mutation.originSquare.file != mutation.targetSquare.file, pieces[mutation.targetSquare] == nil {
-        // Pawn moved diagonally to a blank square. Capture en passant.
+      if let enPassant = board.enPassant, piece.figure == .pawn, mutation.targetSquare == enPassant + piece.forwardUnitVector {
         pieces[enPassant] = nil
       }
       pieces[mutation.targetSquare] = Piece(color: piece.color, figure: mutation.promotion ?? piece.figure)
 
-      // Calculate any en passant eligible pawn and touched squares.
+      // Check for pawns that can be captured en passant.
       let enPassant: Square?
       if piece.figure == .pawn, abs(mutation.originSquare.rank.rawValue - mutation.targetSquare.rank.rawValue) == 2 {
         enPassant = mutation.targetSquare
       } else {
         enPassant = nil
       }
+
+      // Update touched squares.
       let squaresTouched = squaresTouched + (squaresTouched.contains(mutation.targetSquare) ? [] : [mutation.targetSquare])
       let mutatedBoard = Board(pieces: pieces, enPassant: enPassant, squaresTouched: squaresTouched)
 
-      // No moving into check.
-      guard !mutatedBoard.isCheck(color: piece.color) else {
+      // Forbid moving into check.
+      guard !mutatedBoard.isCheck(color: moveColor) else {
         return nil
       }
 
@@ -226,25 +139,43 @@ private extension Board {
 
 extension Board: CustomStringConvertible {
   public var description: String {
-    Square.Rank.allCases.reversed().map { rank in
+    let state: String
+    if case let .end(victor) = moves.last {
+      switch victor {
+        case let .some(color):
+          state = "\(color.description.capitalized) \(String.wins)"
+        case nil:
+         state = .drawGame
+      }
+    } else if isCheckmate {
+      state = "\((moveColor == .black ? Piece.Color.white : Piece.Color.black).description.capitalized) \(String.wins)"
+    } else if isNoMovePossible {
+      state = .drawGame
+    } else {
+      state = "\(moveColor.description.capitalized) \(String.toMove)"
+    }
+
+    let grid = Square.Rank.allCases.reversed().map { rank in
       " \(rank) ".appending(Square.File.allCases.map { file in
         pieces[Square(file: file, rank: rank)]?.description ?? " "
       }.joined(separator: " "))
-    }
-    .joined(separator: "\n")
+    }.joined(separator: "\n")
     .appending("\n   ")
     .appending(Square.File.allCases.map(\.description).joined(separator: " "))
+
+    return "\(state).\n\n\(grid)"
   }
 }
 
+// MARK: -
 extension Notation: CustomStringConvertible {
   var description: String {
     switch self {
     case let .end(victor):
       guard let victor else {
-        return .drawGame
+        return .draw
       }
-      return victor == .black ? .blackWins : .whiteWins
+      return victor == .black ? .blackVictory : .whiteVictory
 
     case let .gameplay(gameplay):
       return "\(gameplay)"
@@ -271,7 +202,7 @@ extension Notation.Gameplay.Play: CustomStringConvertible {
       }
 
     case let .translation(disambiguationFile, disambiguationRank, figure, isCapture, promotion, targetSquare):
-      let disambiguation = (disambiguationFile?.description ?? "").appending(disambiguationRank?.description ?? "")
+      let disambiguation = "\(disambiguationFile?.description ?? "")\(disambiguationRank?.description ?? "")"
       let promotion = promotion.map(\.description).map(String.promotion.appending) ?? ""
       return "\(figure)\(disambiguation)\(isCapture ? .capture : "")\(targetSquare)\(promotion)"
     }
@@ -309,8 +240,8 @@ private extension Piece {
       return Vector.diagonalUnitVectors.compactMap(square.allSquaresInDirection)
 
     case .king:
-      return Vector.unitVectors.compactMap { direction in
-        (square + direction).map { targetSquare in
+      return Vector.unitVectors.compactMap { vector in
+        (square + vector).map { targetSquare in
           [targetSquare]
         }
       }
@@ -332,8 +263,8 @@ private extension Piece {
     case .pawn:
       let oneSquareForward = (square + forwardUnitVector)!
       let isOnStartRank = square.rank == .two || square.rank == .seven
-      return [[oneSquareForward, isOnStartRank ? oneSquareForward + forwardUnitVector : nil].compactMap { square in
-        square
+      return [[oneSquareForward, isOnStartRank ? oneSquareForward + forwardUnitVector : nil].compactMap { targetSquare in
+        targetSquare
       }]
 
     case .queen:
@@ -366,28 +297,23 @@ extension Piece.Figure: CustomStringConvertible {
 
 // MARK: -
 private extension Square {
-  func allSquaresInDirection(_ direction: Vector) -> [Self] {
-    guard let squareInDirection = self + direction else {
-      return []
+  static func + (lhs: Self, rhs: Vector) -> Self? {
+    guard let file = File(rawValue: lhs.file.rawValue + rhs.files), let rank = Rank(rawValue: lhs.rank.rawValue + rhs.ranks) else {
+      return nil
     }
+    return .init(file: file, rank: rank)
+  }
 
-    return [squareInDirection] + squareInDirection.allSquaresInDirection(direction)
+  func allSquaresInDirection(_ direction: Vector) -> [Self] {
+    (self + direction).map { squareInDirection in
+      [squareInDirection] + squareInDirection.allSquaresInDirection(direction)
+    } ?? []
   }
 }
 
 extension Square: CustomStringConvertible {
   public var description: String {
-    file.description.appending(rank.description)
-  }
-}
-
-private extension Square.File {
-  static func < (lhs: Self, rhs: Self) -> Bool {
-    lhs.rawValue < rhs.rawValue
-  }
-
-  static func > (lhs: Self, rhs: Self) -> Bool {
-    lhs.rawValue > rhs.rawValue
+    "\(file)\(rank)"
   }
 }
 
@@ -406,8 +332,8 @@ extension Square.Rank: CustomStringConvertible {
 // MARK: -
 extension Vector {
   static let cardinalUnitVectors: [Vector] = [
-    .init(files: 0, ranks: -1),
     .init(files: -1, ranks: 0),
+    .init(files: 0, ranks: -1),
     .init(files: 0, ranks: 1),
     .init(files: 1, ranks: 0)
   ]
@@ -428,20 +354,16 @@ extension Vector {
 ///
 /// Chess is a board game played between two players.
 public struct Game {
-  var isGameOver: Bool {
-    guard case .end = moves.last else {
-      return board.isCheckmate(color: moveColor)
+  /// Game state
+  public var isGameOver: Bool {
+    guard case .end = board.moves.last else {
+      return board.isNoMovePossible
     }
     return true
   }
 
+  /// Game board
   private(set) var board: Board
-
-  private var moveColor: Piece.Color {
-    moves.count.isMultiple(of: 2) ? .white : .black
-  }
-
-  private var moves = [Notation]()
 
   /// Move
   /// - Parameter notation: Notation
@@ -450,41 +372,131 @@ public struct Game {
       throw InvalidNotation.unparseable(notation: notationString)
     }
 
-    if case let .gameplay(gameplay) = notation {
-      let board = try board.mutated(play: gameplay.play, moveColor: moveColor)
-
-      // Compute game state.
-      let isCheck = board.isCheck(color: moveColor.opposite)
-      let isCheckmate = board.isCheckmate(color: moveColor.opposite)
-
-      // Validate punctuation parsed from input notation.
-      switch gameplay.punctuation {
-      case .check:
-        guard isCheck else {
-          throw InvalidNotation.badPunctuation(.isNotCheck)
-        }
-        guard !isCheckmate else {
-          throw InvalidNotation.badPunctuation(.isCheckmate)
-        }
-
-      case .checkmate:
-        guard isCheckmate else {
-          throw InvalidNotation.badPunctuation(.isNotCheckmate)
-        }
-
-      case .none:
-        guard  !isCheckmate else {
-          throw InvalidNotation.badPunctuation(.isCheckmate)
-        }
-        guard !isCheck else {
-          throw InvalidNotation.badPunctuation(.isCheck)
-        }
-      }
-
-      self.board = board
+    guard case let .gameplay(gameplay) = notation else {
+      board.moves += [notation]
+      return
     }
 
-    moves += [notation]
+    let mutations: [Board.Mutation]
+    
+    switch gameplay.play {
+    case let .castle(castle):
+      guard !board.isCheck(color: board.moveColor) else {
+        throw IllegalMove.cannotCastle(.inCheck)
+      }
+      
+      let rank: Square.Rank = board.moveColor == .black ? .eight : .one
+      guard !(castle == .long ? [.b, .c, .d] : [.f, .g]).map({ file in
+        Square(file: file, rank: rank)
+      }).contains(where: board.pieces.keys.contains) else {
+        throw IllegalMove.cannotCastle(.obstructed)
+      }
+      
+      let kingOriginSquare = Square(file: .e, rank: rank)
+      let rookOriginSquare = Square(file: castle == .long ? .a : .h, rank: rank)
+      for (figure, square) in [Piece.Figure.king: kingOriginSquare, Piece.Figure.rook: rookOriginSquare] {
+        guard board.pieces[square] == .init(color: board.moveColor, figure: figure) else {
+          throw IllegalMove.cannotCastle(.pieceOutOfPosition(figure: figure))
+        }
+        
+        guard !board.squaresTouched.contains(square) else {
+          throw IllegalMove.cannotCastle(.pieceMoved(figure: figure))
+        }
+      }
+      
+      let rookTargetSquare = Square(file: castle == .long ? .d : .f, rank: rank)
+      mutations = [
+        (originSquare: kingOriginSquare, targetSquare: rookTargetSquare, promotion: nil),
+        (originSquare: rookTargetSquare, targetSquare: .init(file: castle == .long ?.c : .g, rank: rank), promotion: nil),
+        (originSquare: rookOriginSquare, targetSquare: rookTargetSquare, promotion: nil)
+      ]
+      
+    case let .translation(disambiguationFile, disambiguationRank, figure, isCapture, promotion, targetSquare):
+      let eligibleSquares: [Square] = board.pieces.compactMap { square, piece in
+        guard piece == .init(color: board.moveColor, figure: figure) else {
+          return nil
+        }
+        
+        if let disambiguationFile, square.file != disambiguationFile {
+          return nil
+        }
+        
+        if let disambiguationRank, square.rank != disambiguationRank {
+          return nil
+        }
+        
+        return board.moves(from: square, isCapture: isCapture).contains(targetSquare) ? square : nil
+      }
+      
+      guard let originSquare = eligibleSquares.first else {
+        throw InvalidNotation.badMove
+      }
+      
+      guard eligibleSquares.count == 1 else {
+        throw InvalidNotation.ambiguous
+      }
+      
+      // Pawns must be promoted when they reach the end of the board.
+      let promotionRank: Square.Rank = board.moveColor == .black ? .one : .eight
+      guard promotion != nil || figure != .pawn || targetSquare.rank != promotionRank else {
+        throw IllegalMove.figureMustPromote
+      }
+      
+      if let promotion {
+        // Only pawns can be promoted
+        guard figure == .pawn else {
+          throw IllegalMove.figureCannotPromote
+        }
+        
+        // only when they reach the end of the board
+        guard targetSquare.rank == promotionRank else {
+          throw IllegalMove.mustReachEndOfBoardToPromote
+        }
+        
+        // and they must be promoted to bishop, knight, rook or queen.
+        guard ![Piece.Figure.king, Piece.Figure.pawn].contains(promotion) else {
+          throw IllegalMove.cannotPromoteToFigure
+        }
+      }
+      
+      mutations = [(originSquare: originSquare, targetSquare: targetSquare, promotion: promotion)]
+    }
+    
+    guard var mutatedBoard = board.mutatedBoard(mutations: mutations) else {
+      throw IllegalMove.cannotMoveIntoCheck
+    }
+    
+    mutatedBoard.moves = self.board.moves + [notation]
+    
+    // Compute game state.
+    let isCheck = mutatedBoard.isCheck(color: mutatedBoard.moveColor)
+    let isCheckmate = mutatedBoard.isCheckmate
+    
+    // Validate punctuation parsed from input notation.
+    switch gameplay.punctuation {
+    case .check:
+      guard isCheck else {
+        throw InvalidNotation.badPunctuation(.isNotCheck)
+      }
+      guard !isCheckmate else {
+        throw InvalidNotation.badPunctuation(.isCheckmate)
+      }
+      
+    case .checkmate:
+      guard isCheckmate else {
+        throw InvalidNotation.badPunctuation(.isNotCheckmate)
+      }
+      
+    case .none:
+      guard  !isCheckmate else {
+        throw InvalidNotation.badPunctuation(.isCheckmate)
+      }
+      guard !isCheck else {
+        throw InvalidNotation.badPunctuation(.isCheck)
+      }
+    }
+    
+    self.board = mutatedBoard
   }
 
   /// Designated initializer
@@ -495,13 +507,12 @@ public struct Game {
 
 extension Game: CustomStringConvertible {
   public var description: String {
-    (moves.isEmpty ? "" : stride(from: 0, to: moves.count, by: 2).map { i in
+    let moves = board.moves.isEmpty ? "" : stride(from: 0, to: board.moves.count, by: 2).map { i in
       "\(i / 2 + 1). "
-        .appending(moves[i].description)
-        .appending(moves.count > i + 1 ? " \(moves[i + 1])" : "")
+        .appending(board.moves[i].description)
+        .appending(board.moves.count > i + 1 ? " \(board.moves[i + 1])" : "")
       }.joined(separator: "\n")
-    .appending("\n\n"))
-    .appending(isGameOver ? "" : "\(moveColor.description.capitalized.appending(" to move."))\n\n")
-    .appending(board.description)
+
+    return "\(moves)\n\n\(board)"
   }
 }

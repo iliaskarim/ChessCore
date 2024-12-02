@@ -109,13 +109,13 @@ enum Notation {
 
   init?(string: String) {
     switch string {
-    case .whiteWins:
+    case .whiteVictory:
       self = .end(victor: .white)
 
-    case .blackWins:
+    case .blackVictory:
       self = .end(victor: .black)
 
-    case .drawGame:
+    case .draw:
       self = .end(victor: nil)
 
     default:

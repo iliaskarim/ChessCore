@@ -8,7 +8,7 @@ enum InvalidNotation: Error {
   }
 
   case ambiguous
+  case badMove
   case badPunctuation(_: BadPunctuation)
-  case noPossiblePiece
   case unparseable(notation: String)
 }

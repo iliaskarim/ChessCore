@@ -7,12 +7,14 @@
 public struct Board {
   typealias Mutation = (originSquare: Square, targetSquare: Square, promotion: Piece.Figure?)
 
+  let enPassant: Square?
+
+  var moves = [Notation]()
+
   let pieces: [Square: Piece]
 
   let squaresTouched: [Square]
-
-  let enPassant: Square?
-
+  
   init(pieces: [Square : Piece], enPassant: Square? = nil, squaresTouched: [Square] = []) {
     self.pieces = pieces
     self.enPassant = enPassant
