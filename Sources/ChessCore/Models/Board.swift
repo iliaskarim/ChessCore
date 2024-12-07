@@ -14,8 +14,8 @@ public struct Board {
   let pieces: [Square: Piece]
 
   let squaresTouched: [Square]
-  
-  init(pieces: [Square : Piece], enPassant: Square? = nil, squaresTouched: [Square] = []) {
+
+  init(pieces: [Square: Piece], enPassant: Square? = nil, squaresTouched: [Square] = []) {
     self.pieces = pieces
     self.enPassant = enPassant
     self.squaresTouched = squaresTouched

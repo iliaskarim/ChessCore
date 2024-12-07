@@ -7,7 +7,7 @@ public struct Square: Hashable {
   enum File: Int, CaseIterable {
     case a = 1, b, c, d, e, f, g, h
 
-    internal init?(_ character: Character) {
+    init?(_ character: Character) {
       guard let ascii = character.asciiValue else {
         return nil
       }
@@ -19,7 +19,7 @@ public struct Square: Hashable {
   enum Rank: Int, CaseIterable {
     case one = 1, two, three, four, five, six, seven, eight
 
-    internal init?(_ character: Character) {
+    init?(_ character: Character) {
       guard let int = Int(String(character)) else {
         return nil
       }
@@ -27,16 +27,16 @@ public struct Square: Hashable {
     }
   }
 
-  internal let file: File
+  let file: File
 
-  internal let rank: Rank
-  
+  let rank: Rank
+
   /// Designated initializer
   init(file: File, rank: Rank) {
     self.file = file
     self.rank = rank
-  } 
-  
+  }
+
   /// Convenience initializer
   public init?(_ string: String) {
     guard let file = string.first.map(File.init) ?? nil, let rank = string.last.map(Rank.init) ?? nil, string.count == 2 else {

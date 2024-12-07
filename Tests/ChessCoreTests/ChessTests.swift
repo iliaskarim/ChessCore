@@ -2,7 +2,7 @@ import XCTest
 @testable import ChessCore
 
 final class ChessTests: XCTestCase {
- func testFirstMoves() throws {
+  func testFirstMoves() throws {
     for move in ["a3", "a4", "b3", "b4", "c3", "c4", "d3", "d4", "e3", "e4", "f3", "f4", "g3", "g4", "h3", "h4"] {
       var game = Game()
       try game.move(move)
