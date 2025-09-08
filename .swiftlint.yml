@@ -1,6 +1,26 @@
 disabled_rules:
+  - comment_spacing
+  - cyclomatic_complexity
+  - force_cast
+  - force_try
+  - function_body_length
   - identifier_name
-  - trailing_comma
+  - file_length
+  - leading_whitespace
+  - static_over_final_class
+  - type_name
+  - unused_enumerated
 
-cyclomatic_complexity: 50
-function_body_length: 80
+line_length:
+  warning: 110
+
+nesting:
+  function_level: 1
+  type_level: 3
+
+trailing_whitespace:
+  severity: error
+
+excluded:
+  - .build
+  - Package.swift
