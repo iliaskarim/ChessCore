@@ -1,0 +1,109 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": "swift build",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Build all",
+      "type": "shell",
+      "command": "swift build --build-tests",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Test",
+      "type": "shell",
+      "command": "swift test",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Format all files",
+      "type": "shell",
+      "command": "swiftformat -v .",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Lint all files",
+      "type": "shell",
+      "command": "swiftlint .",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+      }
+    },
+    {
+      "label": "Format and lint all files",
+      "problemMatcher": [],
+      "dependsOn": [
+        "Format all files",
+        "Lint all files"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Format current file",
+      "type": "shell",
+      "command": "swiftformat -v ${file}",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Lint current file",
+      "type": "shell",
+      "command": "swiftlint ${file}",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "Format and lint current file",
+      "problemMatcher": [],
+      "dependsOn": [
+        "Format current file",
+        "Lint current file"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Update Swift packages",
+      "command": "swift",
+      "args": ["package", "update"],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+        "clear": true
+      }
+    }
+  ]
+}

@@ -1,8 +1,5 @@
-
 protocol BoardDataSource: AnyObject {
-  var enPassant: Square? { get set }
+  var toMove: Piece.Color { get }
 
-  var moveColor: Piece.Color { get }
-
-  func hasPieceNotMoved(piece: Piece, square: Square) -> Bool
+  func hasPieceMoved(_ piece: Piece, from square: Square) -> Bool
 }
