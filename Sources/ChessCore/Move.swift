@@ -5,11 +5,11 @@
 /// queenside. Non-castling moves record the moving figure, the destination
 /// square, whether the move captures, an optional promotion figure, and
 /// optional algebraic disambiguation.
-public enum Move: Hashable {
+public enum Move: Hashable, Sendable {
   /// A castling move.
   ///
   /// Castling is either kingside or queenside.
-  public enum Castling: CaseIterable {
+  public enum Castling: CaseIterable, Sendable {
     /// Kingside (O-O) castling.
     case kingside
 
@@ -22,7 +22,7 @@ public enum Move: Hashable {
   /// Details include the moving figure, the square the figure moves to,
   /// whether the move captures, an optional promotion figure, and optional
   /// algebraic disambiguation.
-  public struct Translation: Hashable {
+  public struct Translation: Hashable, Sendable {
     /// Moving figure.
     public let figure: Piece.Figure
 

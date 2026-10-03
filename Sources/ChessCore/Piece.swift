@@ -1,11 +1,11 @@
 /// A chess piece.
 ///
 /// Each piece is identified by its ``Color`` (side) and ``Figure`` (kind).
-public struct Piece: Equatable {
+public struct Piece: Equatable, Sendable {
   /// A piece's color.
   ///
   /// A color identifies which side a piece belongs to.
-  public enum Color: String, CaseIterable {
+  public enum Color: String, CaseIterable, Sendable {
     case white, black
 
     /// Opposing piece color.
@@ -37,7 +37,7 @@ public struct Piece: Equatable {
   /// A piece's figure.
   ///
   /// A figure identifies the kind of chess piece.
-  public enum Figure: String, CaseIterable {
+  public enum Figure: String, CaseIterable, Sendable {
     case king = "K"
 
     case queen = "Q"
