@@ -1,0 +1,21 @@
+#!/bin/bash
+set -ex
+
+# toolchain paths – adjust if Xcode is installed elsewhere
+DOCC="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/docc"
+
+# derive scheme name from the current directory (assumes project directory
+# name matches the product/scheme name).
+SCHEME="$(basename "$(pwd)")"
+
+# clean docs
+rm -rf .build build docs
+
+# build docs
+xcodebuild docbuild \
+    -scheme "$SCHEME" \
+    -destination 'platform=macOS,arch=arm64,name=My Mac' \
+    -derivedDataPath build > /dev/null
+$DOCC process-archive transform-for-static-hosting \
+    --output-path ./docs \
+    "./build/Build/Products/Debug/$SCHEME.doccarchive" > /dev/null
