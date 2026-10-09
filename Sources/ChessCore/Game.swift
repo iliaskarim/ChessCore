@@ -30,8 +30,8 @@ private extension Move {
 
 /// A chess game.
 ///
-/// A game owns the current board position and applies moves while tracking
-/// game status such as whose turn it is and whether the game has ended.
+/// A game owns the current board position and applies moves while tracking game
+/// status such as whose turn it is and whether the game has ended.
 public class Game: BoardDataSource, ObservableObject {
   /// A game's status.
   ///

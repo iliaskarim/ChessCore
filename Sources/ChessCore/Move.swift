@@ -19,9 +19,9 @@ public enum Move: Hashable, Sendable {
 
   /// A non-castling move.
   ///
-  /// Details include the moving figure, the square the figure moves to,
-  /// whether the move captures, an optional promotion figure, and optional
-  /// algebraic disambiguation.
+  /// Details include the moving figure, the square the figure moves to, whether
+  /// the move captures, an optional promotion figure, and optional algebraic
+  /// disambiguation.
   public struct Translation: Hashable, Sendable {
     /// Moving figure.
     public let figure: Piece.Figure
