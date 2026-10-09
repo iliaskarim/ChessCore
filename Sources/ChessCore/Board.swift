@@ -95,18 +95,6 @@ private extension Move.Translation {
   }
 }
 
-private extension Square? {
-  static func + (lhs: Self, rhs: Board.Vector) -> Self {
-    guard let lhs,
-          let file = Wrapped.File(rawValue: lhs.file.rawValue + rhs.files),
-          let rank = Wrapped.Rank(rawValue: lhs.rank.rawValue + rhs.ranks) else {
-      return nil
-    }
-
-    return .init(file: file, rank: rank)
-  }
-}
-
 private extension Piece {
   var files: [Square.File] {
     switch figure {
@@ -206,6 +194,18 @@ private extension Square {
   }
 }
 
+private extension Square? {
+  static func + (lhs: Self, rhs: Board.Vector) -> Self {
+    guard let lhs,
+          let file = Wrapped.File(rawValue: lhs.file.rawValue + rhs.files),
+          let rank = Wrapped.Rank(rawValue: lhs.rank.rawValue + rhs.ranks) else {
+      return nil
+    }
+
+    return .init(file: file, rank: rank)
+  }
+}
+
 /// An 8x8 chessboard where each square may hold a piece.
 ///
 /// A board represents a position and provides move generation plus status
@@ -249,6 +249,15 @@ public struct Board {
     }))
   }
 
+  /// Retrieves the piece located at a specific square on the board.
+  ///
+  /// - Parameters:
+  ///   - square: The square on the board whose piece to retrieve.
+  /// - Returns: The piece at the given square, or `nil` if the square is empty.
+  public subscript(square: Square) -> Piece? {
+    pieces[square]
+  }
+
   /// Board status.
   public var status: Status? {
     switch (isInCheck, isNoMovePossible) {
@@ -288,15 +297,6 @@ public struct Board {
 
   private var toMove: Piece.Color {
     dataSource?.toMove ?? .white
-  }
-
-  /// Retrieves the piece located at a specific square on the board.
-  ///
-  /// - Parameters:
-  ///   - square: The square on the board whose piece to retrieve.
-  /// - Returns: The piece at the given square, or `nil` if the square is empty.
-  public subscript(square: Square) -> Piece? {
-    pieces[square]
   }
 
   /// Retrieves the moves that can be made from a specific square on the board.
@@ -439,16 +439,16 @@ public struct Board {
 extension Board: Collection {
   public typealias Index = [Square: Piece].Index
 
+  public subscript(position: Index) -> (key: Square, value: Piece) {
+    pieces[position]
+  }
+
   public var endIndex: Index {
     pieces.endIndex
   }
 
   public var startIndex: Index {
     pieces.startIndex
-  }
-
-  public subscript(position: Index) -> (key: Square, value: Piece) {
-    pieces[position]
   }
 
   public func index(after i: Index) -> Index {

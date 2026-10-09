@@ -6,14 +6,18 @@ public struct Square: Hashable, Sendable {
   ///
   /// A file identifies a square's column on the board, labeled from `a` to `h`.
   public enum File: Int, CaseIterable, Sendable {
-    case a = 1, b, c, d, e, f, g, h
+    case a = 1
+
+    case b, c, d, e, f, g, h
   }
 
   /// A square's rank.
   ///
   /// A rank identifies a square's row on the board, numbered from `1` to `8`.
   public enum Rank: Int, CaseIterable, Sendable {
-    case one = 1, two, three, four, five, six, seven, eight
+    case one = 1
+
+    case two, three, four, five, six, seven, eight
   }
 
   /// Square file.
