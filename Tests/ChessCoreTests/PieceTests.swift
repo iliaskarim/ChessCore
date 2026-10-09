@@ -5,13 +5,13 @@ struct PieceTests {
   // MARK: - Piece.Color
 
   @Test
-  func testPieceColorBackRank() {
+  func pieceColorBackRank() {
     #expect(Piece.Color.white.backRank == .one)
     #expect(Piece.Color.black.backRank == .eight)
   }
 
   @Test
-  func testPieceColorForwardUnitVector() {
+  func pieceColorForwardUnitVector() {
     #expect(Piece.Color.white.forwardUnitVector.files == 0)
     #expect(Piece.Color.white.forwardUnitVector.ranks == 1)
 
@@ -20,26 +20,26 @@ struct PieceTests {
   }
 
   @Test
-  func testPieceColorOpposite() {
+  func pieceColorOpposite() {
     #expect(Piece.Color.white.opposite == .black)
     #expect(Piece.Color.black.opposite == .white)
   }
 
   @Test
-  func testPieceColorPawnSinglePushRankFromStartRank() {
-    #expect(Piece.Color.white.pawnSinglePushTargetRankFromStart == .three)
-    #expect(Piece.Color.black.pawnSinglePushTargetRankFromStart == .six)
+  func pieceColorPawnSinglePushTargetRank() {
+    #expect(Piece.Color.white.pawnSinglePushTargetRank == .three)
+    #expect(Piece.Color.black.pawnSinglePushTargetRank == .six)
   }
 
   @Test
-  func testPieceColorPawnDoublePushRankFromStartRank() {
-    #expect(Piece.Color.white.pawnDoublePushTargetRankFromStart == .four)
-    #expect(Piece.Color.black.pawnDoublePushTargetRankFromStart == .five)
+  func pieceColorPawnDoublePushTargetRank() {
+    #expect(Piece.Color.white.pawnDoublePushTargetRank == .four)
+    #expect(Piece.Color.black.pawnDoublePushTargetRank == .five)
   }
 
   @Test
-  func testPieceColorPawnStartRank() {
-    #expect(Piece.Color.white.pawnStartRank == .two)
-    #expect(Piece.Color.black.pawnStartRank == .seven)
+  func pieceColorPawnRank() {
+    #expect(Piece.Color.white.pawnRank == .two)
+    #expect(Piece.Color.black.pawnRank == .seven)
   }
 }

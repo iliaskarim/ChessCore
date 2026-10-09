@@ -15,7 +15,7 @@ struct BoardTests {
   }
 
   @Test
-  func testDataSourceIsWeaklyHeld() {
+  func dataSourceIsWeaklyHeld() {
     var board = Board.board
     var dataSource: BoardDataSource? = MockBoardDataSource()
 
@@ -29,7 +29,7 @@ struct BoardTests {
   // MARK: - Castling
 
   @Test
-  func testBlackCastlingMoves() {
+  func blackCastlingMoves() {
     var board: Board = [
       .init(file: .e, rank: .eight): .init(color: .black, figure: .king),
       .init(file: .a, rank: .eight): .init(color: .black, figure: .rook),
@@ -97,7 +97,7 @@ struct BoardTests {
   }
 
   @Test
-  func testWhiteCastlingMoves() {
+  func whiteCastlingMoves() {
     let board: Board = [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -165,7 +165,7 @@ struct BoardTests {
   // MARK: - Initial Position
 
   @Test
-  func testInitialBoardSetup() {
+  func initialBoardSetup() throws {
     let board = Board.board
     #expect(board.count == 32)
 
@@ -175,9 +175,9 @@ struct BoardTests {
     ]
 
     for file in Square.File.allCases {
-      #expect(board[.init(file: file, rank: .one)] == .init(
+      #expect(try board[.init(file: file, rank: .one)] == .init(
         color: .white,
-        figure: backRank[file]!
+        figure: #require(backRank[file])
       ))
 
       #expect(board[.init(file: file, rank: .two)] == .init(
@@ -194,15 +194,15 @@ struct BoardTests {
         figure: .pawn
       ))
 
-      #expect(board[.init(file: file, rank: .eight)] == .init(
+      #expect(try board[.init(file: file, rank: .eight)] == .init(
         color: .black,
-        figure: backRank[file]!
+        figure: #require(backRank[file])
       ))
     }
   }
 
   @Test
-  func testInitialKnightMovesFromB1() {
+  func initialKnightMovesFromB1() {
     let na3 = Move.translation(.init(
       figure: .knight,
       targetSquare: .init(file: .a, rank: .three),
@@ -228,7 +228,7 @@ struct BoardTests {
   }
 
   @Test
-  func testInitialKnightMovesFromG1() {
+  func initialKnightMovesFromG1() {
     let nf3 = Move.translation(.init(
       figure: .knight,
       targetSquare: .init(file: .f, rank: .three),
@@ -254,7 +254,7 @@ struct BoardTests {
   }
 
   @Test
-  func testInitialPawnMoves() {
+  func initialPawnMoves() {
     for file in Square.File.allCases {
       let expectedMoveToRankThree = Move.translation(.init(
         figure: .pawn,
@@ -284,7 +284,7 @@ struct BoardTests {
   // MARK: - Promotion
 
   @Test
-  func testBlackPromotionMoves() {
+  func blackPromotionMoves() {
     var board: Board = [
       .init(file: .e, rank: .two): .init(color: .black, figure: .pawn)
     ]
@@ -308,7 +308,7 @@ struct BoardTests {
   }
 
   @Test
-  func testWhitePromotionMoves() {
+  func whitePromotionMoves() {
     let board: Board = [
       .init(file: .e, rank: .seven): .init(color: .white, figure: .pawn)
     ]

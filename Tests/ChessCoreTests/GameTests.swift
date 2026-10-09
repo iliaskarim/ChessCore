@@ -5,7 +5,7 @@ struct GameTests {
   // MARK: - Castling
 
   @Test
-  func testCastlingIsIllegalAfterKingIsMoved() throws {
+  func castlingIsIllegalAfterKingIsMoved() throws {
     let game = Game(board: [
       .init(file: .e, rank: .two): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -31,7 +31,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingIsIllegalWhenKingIsInCheck() throws {
+  func castlingIsIllegalWhenKingIsInCheck() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -52,7 +52,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenBFileIsBlocked() throws {
+  func castlingLegalityIsSideSpecificWhenBFileIsBlocked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -76,7 +76,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenCFileIsAttacked() throws {
+  func castlingLegalityIsSideSpecificWhenCFileIsAttacked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -100,7 +100,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenCFileIsBlocked() throws {
+  func castlingLegalityIsSideSpecificWhenCFileIsBlocked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -124,7 +124,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenDFileIsAttacked() throws {
+  func castlingLegalityIsSideSpecificWhenDFileIsAttacked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -148,7 +148,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenDFileIsBlocked() throws {
+  func castlingLegalityIsSideSpecificWhenDFileIsBlocked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -172,7 +172,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenFFileIsAttacked() throws {
+  func castlingLegalityIsSideSpecificWhenFFileIsAttacked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -196,7 +196,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenFFileIsBlocked() throws {
+  func castlingLegalityIsSideSpecificWhenFFileIsBlocked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -220,7 +220,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenGFileIsAttacked() throws {
+  func castlingLegalityIsSideSpecificWhenGFileIsAttacked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -244,7 +244,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingLegalityIsSideSpecificWhenGFileIsBlocked() throws {
+  func castlingLegalityIsSideSpecificWhenGFileIsBlocked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -268,7 +268,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingRightsAreRookSpecificAfterKingsideRookIsMoved() throws {
+  func castlingRightsAreRookSpecificAfterKingsideRookIsMoved() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -297,7 +297,7 @@ struct GameTests {
   }
 
   @Test
-  func testCastlingRightsAreRookSpecificAfterQueensideRookIsMoved() throws {
+  func castlingRightsAreRookSpecificAfterQueensideRookIsMoved() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .two): .init(color: .white, figure: .rook),
@@ -326,7 +326,7 @@ struct GameTests {
   }
 
   @Test
-  func testQueensideCastlingIsLegalWhenBFileIsAttacked() throws {
+  func queensideCastlingIsLegalWhenBFileIsAttacked() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .a, rank: .one): .init(color: .white, figure: .rook),
@@ -346,7 +346,7 @@ struct GameTests {
   // MARK: - En Passant
 
   @Test
-  func testCanCaptureEnPassantAfterDoubleStepPawnMove() throws {
+  func canCaptureEnPassantAfterDoubleStepPawnMove() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .d, rank: .two): .init(color: .white, figure: .pawn),
@@ -369,7 +369,7 @@ struct GameTests {
   }
 
   @Test
-  func testCannotCaptureEnPassantAfterAnotherMove() throws {
+  func cannotCaptureEnPassantAfterAnotherMove() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .d, rank: .two): .init(color: .white, figure: .pawn),
@@ -398,7 +398,7 @@ struct GameTests {
   }
 
   @Test
-  func testCannotCaptureEnPassantAfterSingleStepPawnMove() throws {
+  func cannotCaptureEnPassantAfterSingleStepPawnMove() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .d, rank: .three): .init(color: .white, figure: .pawn),
@@ -423,7 +423,7 @@ struct GameTests {
   // MARK: - Game End
 
   @Test
-  func testFiftyMoveRule() throws {
+  func fiftyMoveRule() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .b, rank: .one): .init(color: .white, figure: .knight),
@@ -445,7 +445,7 @@ struct GameTests {
   }
 
   @Test
-  func testScholarsMate() throws {
+  func scholarsMate() throws {
     let game = Game()
 
     // 1.
@@ -481,7 +481,7 @@ struct GameTests {
   }
 
   @Test
-  func testStalemate() throws {
+  func stalemate() throws {
     let game = Game(board: [
       .init(file: .e, rank: .five): .init(color: .white, figure: .king),
       .init(file: .e, rank: .seven): .init(color: .white, figure: .pawn),
@@ -497,7 +497,7 @@ struct GameTests {
   // MARK: - Promotion
 
   @Test
-  func testPromotionOnCapture() throws {
+  func promotionOnCapture() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .g, rank: .seven): .init(color: .white, figure: .pawn),
@@ -518,7 +518,7 @@ struct GameTests {
   }
 
   @Test
-  func testPromotionWithoutCapture() throws {
+  func promotionWithoutCapture() throws {
     let game = Game(board: [
       .init(file: .e, rank: .one): .init(color: .white, figure: .king),
       .init(file: .g, rank: .seven): .init(color: .white, figure: .pawn),

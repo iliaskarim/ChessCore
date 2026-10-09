@@ -100,20 +100,27 @@ extension Move.Castling: CustomStringConvertible {
   public var description: String {
     switch self {
     case .kingside:
-      .castlingShortNotation
+      .castlingKingsideNotation
 
     case .queenside:
-      .castlingLongNotation
+      .castlingQueensideNotation
     }
   }
 }
 
 extension Move.Translation: CustomStringConvertible {
   public var description: String {
-    let disambiguation = "\(disambiguationFile?.description ?? "")\(disambiguationRank?.description ?? "")"
-    let promotion = promotion.map(\.rawValue).map(String.promotionNotation.appending) ?? ""
-    return """
-    \(figure.rawValue)\(disambiguation)\(isCapture ? .captureNotation : "")\(targetSquare)\(promotion)
-    """
+    figure.rawValue.appending(disambiguationDescription)
+      .appending(isCapture ? .captureNotation : "")
+      .appending(targetSquare.description)
+      .appending(promotionDescription)
+  }
+
+  private var disambiguationDescription: String {
+    "\(disambiguationFile?.description ?? "")\(disambiguationRank?.description ?? "")"
+  }
+
+  private var promotionDescription: String {
+    promotion.map(\.rawValue).map(String.promotionNotation.appending) ?? ""
   }
 }

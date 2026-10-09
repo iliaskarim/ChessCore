@@ -5,11 +5,11 @@ public extension String {
   /// SAN marker used in move notation for captures.
   static let captureNotation = "x"
 
-  /// SAN notation for queenside castling.
-  static let castlingLongNotation = "O-O-O"
-
   /// SAN notation for kingside castling.
-  static let castlingShortNotation = "O-O"
+  static let castlingKingsideNotation = "O-O"
+
+  /// SAN notation for queenside castling.
+  static let castlingQueensideNotation = "O-O-O"
 
   /// Standard result notation indicating a drawn game.
   static let drawNotation = "1/2-1/2"

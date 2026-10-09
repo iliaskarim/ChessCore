@@ -1,9 +1,9 @@
 import Combine
 import Foundation
 
-private extension Board {
+private extension Board.Status {
   var punctuation: Turn.Punctuation? {
-    switch status {
+    switch self {
     case .check:
       .check
 
@@ -132,9 +132,7 @@ public class Game: BoardDataSource, ObservableObject {
     turns += [.move(move, punctuation: nil)]
 
     // Calculate the punctuation after adding the move to turns played.
-    if let punctuation = board.punctuation, let lastIndex = turns.indices.last {
-      turns[lastIndex] = .move(move, punctuation: punctuation)
-    }
+    turns[turns.indices.last!] = .move(move, punctuation: board.status?.punctuation)
   }
 
   func hasPieceMoved(_ piece: Piece, from square: Square) -> Bool {

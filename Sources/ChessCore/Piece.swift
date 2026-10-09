@@ -21,15 +21,15 @@ public struct Piece: Equatable, Sendable {
       .init(files: 0, ranks: self == .white ? 1 : -1)
     }
 
-    var pawnDoublePushTargetRankFromStart: Square.Rank {
-      .init(rawValue: pawnSinglePushTargetRankFromStart.rawValue + forwardUnitVector.ranks)!
+    var pawnDoublePushTargetRank: Square.Rank {
+      .init(rawValue: pawnSinglePushTargetRank.rawValue + forwardUnitVector.ranks)!
     }
 
-    var pawnSinglePushTargetRankFromStart: Square.Rank {
-      .init(rawValue: pawnStartRank.rawValue + forwardUnitVector.ranks)!
+    var pawnSinglePushTargetRank: Square.Rank {
+      .init(rawValue: pawnRank.rawValue + forwardUnitVector.ranks)!
     }
 
-    var pawnStartRank: Square.Rank {
+    var pawnRank: Square.Rank {
       .init(rawValue: backRank.rawValue + forwardUnitVector.ranks)!
     }
   }

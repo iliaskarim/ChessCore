@@ -5,13 +5,13 @@ struct MoveTests {
   // MARK: - Is Capture
 
   @Test
-  func testCastlingMoveIsCapture() {
+  func castlingMoveIsCapture() {
     #expect(!Move.castling(.kingside).isCapture)
     #expect(!Move.castling(.queenside).isCapture)
   }
 
   @Test
-  func testTranslationMoveIsCapture() {
+  func translationMoveIsCapture() {
     let xe5 = Move.translation(.init(
       figure: .pawn,
       targetSquare: .init(file: .e, rank: .five),
