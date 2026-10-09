@@ -7,7 +7,7 @@ enum Turn {
 
   case end(victor: Piece.Color?)
 
-  case move(_ move: Move, punctuation: Punctuation?)
+  case move(_ move: any Move, punctuation: Punctuation?)
 }
 
 extension Turn: CustomStringConvertible {

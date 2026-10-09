@@ -1,9 +1,9 @@
 import Combine
 import Foundation
 
-private extension Board.Status {
+private extension Board {
   var punctuation: Turn.Punctuation? {
-    switch self {
+    switch status {
     case .check:
       .check
 
@@ -16,22 +16,10 @@ private extension Board.Status {
   }
 }
 
-private extension Move {
-  var isPawnMove: Bool {
-    switch self {
-    case let .translation(translation):
-      translation.figure == .pawn
-
-    case .castling:
-      false
-    }
-  }
-}
-
 /// A chess game.
 ///
-/// A game owns the current board position and applies moves while tracking game
-/// status such as whose turn it is and whether the game has ended.
+/// A game owns the current board position and applies moves while tracking
+/// game status such as whose turn it is and whether the game has ended.
 public class Game: BoardDataSource, ObservableObject {
   /// A game's status.
   ///
@@ -68,11 +56,10 @@ public class Game: BoardDataSource, ObservableObject {
   /// Game status.
   public var status: Status {
     switch (turns.last, board.status) {
-    case let (.end(.some(victor)), _):
-      .winner(victor, isByResignation: true)
-
-    case (.end(nil), _):
-      .draw(.byAgreement)
+    case let (.end(victor), _):
+      victor.map { color in
+        .winner(color, isByResignation: true)
+      } ?? .draw(.byAgreement)
 
     case (_, .checkmate):
       .winner(toMove.opposite, isByResignation: false)
@@ -84,7 +71,7 @@ public class Game: BoardDataSource, ObservableObject {
       if turns.count < 100 || turns.suffix(100).contains(where: { turn in
         switch turn {
         case let .move(move, _):
-          move.isPawnMove || move.isCapture
+          move.movingFigure == .pawn || move.isCapture
 
         default:
           false
@@ -123,7 +110,7 @@ public class Game: BoardDataSource, ObservableObject {
   /// - Throws: `GameStateError.gameOver` if the game is already over,
   ///   `MoveError.ambiguousMove(candidates:)` if multiple moves match the
   ///   input, or `MoveError.illegalMove` if no legal matching move exists.
-  public func play(_ move: Move) throws {
+  public func play(_ move: any Move) throws {
     guard case .toMove = status else {
       throw GameStateError.gameOver
     }
@@ -132,14 +119,16 @@ public class Game: BoardDataSource, ObservableObject {
     turns += [.move(move, punctuation: nil)]
 
     // Calculate the punctuation after adding the move to turns played.
-    turns[turns.indices.last!] = .move(move, punctuation: board.status?.punctuation)
+    if let punctuation = board.punctuation, let lastIndex = turns.indices.last {
+      turns[lastIndex] = .move(move, punctuation: punctuation)
+    }
   }
 
   func hasPieceMoved(_ piece: Piece, from square: Square) -> Bool {
     board[square] != piece || turns.contains { turn in
       switch turn {
-      case let .move(.translation(translation), _):
-        translation.targetSquare == square
+      case let .move(move, _):
+        move.moveTargetSquare == square
 
       default:
         false
@@ -147,7 +136,7 @@ public class Game: BoardDataSource, ObservableObject {
     }
   }
 
-  /// Creates a game from a board.
+  /// Creates a game from a board state.
   ///
   /// - Parameters:
   ///   - board: The game board.
