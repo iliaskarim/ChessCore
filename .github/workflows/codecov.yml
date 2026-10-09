@@ -4,9 +4,11 @@ on: pull_request
 jobs:
   tests:
     name: Unit-Tests
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
-        - name: Checkout repository
-          uses: actions/checkout@v2
-        - name: Run unit tests
-          run: swift test --enable-code-coverage
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Print Swift version
+        run: swift --version
+      - name: Run unit tests
+        run: swift test --enable-code-coverage

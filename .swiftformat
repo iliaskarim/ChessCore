@@ -1,0 +1,9 @@
+--swiftversion 6.0
+--disable blankLinesAroundMark
+--disable preferForLoop
+--disable wrapMultilineStatementBraces
+--commas inline
+--ifdef outdent
+--importgrouping testable-last
+--indent 2
+--propertytypes explicit
