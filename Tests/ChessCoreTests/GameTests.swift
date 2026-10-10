@@ -475,7 +475,7 @@ struct GameTests {
       }
     }
 
-    #expect(game.status == .draw(.byFiftyMoveRule))
+    #expect(game.status == .draw(FiftyMoveDrawCondition.self))
   }
 
   @Test
@@ -545,7 +545,7 @@ struct GameTests {
     )
     try game.play(ke6)
 
-    #expect(game.status == .draw(.byStalemate))
+    #expect(game.status == .draw(StalemateDrawCondition.self))
 
     let kd7 = Translation(
       figure: .king,
@@ -646,25 +646,25 @@ struct GameTests {
 
   @Test
   func testStatusDrawDescription() {
-    let status = Game.Status.draw(.byFiftyMoveRule)
+    let status = Game.Status.draw(FiftyMoveDrawCondition.self)
 
     #expect(status.description == "Draw by fifty-move rule.")
   }
 
-  // MARK: - Game.Status.Draw
+  // MARK: - Draw Conditions
 
   @Test
-  func testDrawByAgreementDescription() {
-    #expect(Game.Status.Draw.byAgreement.description == "Draw by agreement.")
+  func testAgreementDrawConditionName() {
+    #expect(AgreementDrawCondition.name == "agreement")
   }
 
   @Test
-  func testDrawByFiftyMoveRuleDescription() {
-    #expect(Game.Status.Draw.byFiftyMoveRule.description == "Draw by fifty-move rule.")
+  func testFiftyMoveDrawConditionName() {
+    #expect(FiftyMoveDrawCondition.name == "fifty-move rule")
   }
 
   @Test
-  func testDrawByStalemateDescription() {
-    #expect(Game.Status.Draw.byStalemate.description == "Draw by stalemate.")
+  func testStalemateDrawConditionName() {
+    #expect(StalemateDrawCondition.name == "stalemate")
   }
 }
