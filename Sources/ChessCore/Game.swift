@@ -25,9 +25,8 @@ public class Game: BoardDataSource, ObservableObject {
   ///
   /// A game is either in progress, won, or drawn.
   public enum Status {
-    /// A player has won the game, with the winning color and whether the win
-    /// was by resignation or checkmate.
-    case winner(Piece.Color, isByResignation: Bool)
+    /// A player has won the game.
+    case winner(Piece.Color, by: any WinCondition.Type)
 
     /// The game ended in a draw.
     case draw(any DrawCondition.Type)
@@ -41,17 +40,22 @@ public class Game: BoardDataSource, ObservableObject {
 
   /// Game status.
   public var status: Status {
-    switch turns.last {
-    case let .end(.some(victor)):
-      .winner(victor, isByResignation: true)
-
-    default:
-      status(context: .init(
+    status(
+      winContext: .init(board: board, turns: turns, toMove: toMove),
+      drawContext: .init(
         board: board,
         turns: turns,
         positionIdentities: positionIdentities
-      ))
-    }
+      )
+    )
+  }
+
+  /// Win conditions evaluated for the game.
+  public static var winConditions: [any WinCondition.Type] {
+    [
+      ResignationWinCondition.self,
+      CheckmateWinCondition.self
+    ]
   }
 
   /// Draw conditions evaluated for the game.
@@ -65,20 +69,20 @@ public class Game: BoardDataSource, ObservableObject {
     ]
   }
 
-  private func status(context: DrawContext) -> Status {
-    switch board.status {
-    case .checkmate:
-      .winner(toMove.opposite, isByResignation: false)
-
-    default:
-      if let condition = Self.drawConditions.first(where: { condition in
-        condition.isDraw(in: context)
-      }) {
-        .draw(condition)
-      } else {
-        .toMove(toMove)
+  private func status(winContext: WinContext, drawContext: DrawContext) -> Status {
+    for condition in Self.winConditions {
+      if let winner = condition.winner(in: winContext) {
+        return .winner(winner, by: condition)
       }
     }
+
+    if let condition = Self.drawConditions.first(where: { condition in
+      condition.isDraw(in: drawContext)
+    }) {
+      return .draw(condition)
+    }
+
+    return .toMove(toMove)
   }
 
   var toMove: Piece.Color {
@@ -201,8 +205,8 @@ extension Game: CustomDebugStringConvertible {
 extension Game.Status: Equatable {
   public static func == (lhs: Self, rhs: Self) -> Bool {
     switch (lhs, rhs) {
-    case let (.winner(lhsColor, lhsIsByResignation), .winner(rhsColor, rhsIsByResignation)):
-      lhsColor == rhsColor && lhsIsByResignation == rhsIsByResignation
+    case let (.winner(lhsColor, lhsCondition), .winner(rhsColor, rhsCondition)):
+      lhsColor == rhsColor && ObjectIdentifier(lhsCondition) == ObjectIdentifier(rhsCondition)
 
     case let (.draw(lhsCondition), .draw(rhsCondition)):
       ObjectIdentifier(lhsCondition) == ObjectIdentifier(rhsCondition)

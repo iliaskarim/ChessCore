@@ -1,7 +1,7 @@
 import Testing
 @testable import ChessCore
 
-struct GameTests {
+struct GameCastlingTests {
   // MARK: - Castling
 
   @Test
@@ -342,7 +342,9 @@ struct GameTests {
       try game.play(kingsideCastle)
     }
   }
+}
 
+struct GameEnPassantTests {
   // MARK: - En Passant
 
   @Test
@@ -434,8 +436,28 @@ struct GameTests {
     #expect(game.board[.init(file: .d, rank: .three)] == .init(color: .black, figure: .pawn))
     #expect(game.board[.init(file: .d, rank: .four)] == nil)
   }
+}
 
+struct GameEndTests {
   // MARK: - Game End
+
+  @Test
+  func testDrawByAgreement() throws {
+    let game = Game()
+
+    try game.endGame(victor: nil)
+
+    #expect(game.status == .draw(AgreementDrawCondition.self))
+  }
+
+  @Test
+  func testResignation() throws {
+    let game = Game()
+
+    try game.endGame(victor: .black)
+
+    #expect(game.status == .winner(.black, by: ResignationWinCondition.self))
+  }
 
   @Test
   func testThreefoldRepetition() throws {
@@ -540,7 +562,7 @@ struct GameTests {
     )
     try game.play(qxf7)
 
-    #expect(game.status == .winner(.white, isByResignation: false))
+    #expect(game.status == .winner(.white, by: CheckmateWinCondition.self))
   }
 
   @Test
@@ -667,7 +689,9 @@ struct GameTests {
 
     #expect(game.status == .toMove(.white))
   }
+}
 
+struct GamePromotionTests {
   // MARK: - Promotion
 
   @Test
@@ -707,12 +731,14 @@ struct GameTests {
     #expect(game.board[.init(file: .g, rank: .eight)] == .init(color: .white, figure: .rook))
     #expect(game.board[.init(file: .g, rank: .seven)] == nil)
   }
+}
 
+struct GameStatusTests {
   // MARK: - Game.Status
 
   @Test
   func testStatusWinnerDescription() {
-    let status = Game.Status.winner(.white, isByResignation: false)
+    let status = Game.Status.winner(.white, by: CheckmateWinCondition.self)
 
     #expect(status.description == "White wins.")
   }
@@ -756,5 +782,17 @@ struct GameTests {
   @Test
   func testInsufficientMaterialDrawConditionName() {
     #expect(InsufficientMaterialDrawCondition.name == "insufficient material")
+  }
+
+  // MARK: - Win Conditions
+
+  @Test
+  func testCheckmateWinConditionName() {
+    #expect(CheckmateWinCondition.name == "checkmate")
+  }
+
+  @Test
+  func testResignationWinConditionName() {
+    #expect(ResignationWinCondition.name == "resignation")
   }
 }
