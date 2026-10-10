@@ -46,7 +46,11 @@ public class Game: BoardDataSource, ObservableObject {
       .winner(victor, isByResignation: true)
 
     default:
-      status(context: .init(board: board, turns: turns))
+      status(context: .init(
+        board: board,
+        turns: turns,
+        positionIdentities: positionIdentities
+      ))
     }
   }
 
@@ -55,7 +59,8 @@ public class Game: BoardDataSource, ObservableObject {
     [
       AgreementDrawCondition.self,
       StalemateDrawCondition.self,
-      FiftyMoveDrawCondition.self
+      FiftyMoveDrawCondition.self,
+      ThreefoldRepetitionDrawCondition.self
     ]
   }
 
@@ -80,6 +85,8 @@ public class Game: BoardDataSource, ObservableObject {
   }
 
   private var turns = [Turn]()
+
+  private var positionIdentities = [PositionIdentity]()
 
   /// Ends the game.
   ///
@@ -113,6 +120,8 @@ public class Game: BoardDataSource, ObservableObject {
     if let punctuation = board.punctuation, let lastIndex = turns.indices.last {
       turns[lastIndex] = .move(move, punctuation: punctuation)
     }
+
+    positionIdentities.append(positionIdentity())
   }
 
   func hasPieceMoved(_ piece: Piece, from square: Square) -> Bool {
@@ -134,6 +143,46 @@ public class Game: BoardDataSource, ObservableObject {
   public init(board: Board = .board) {
     self.board = board
     self.board.dataSource = self
+    positionIdentities = [positionIdentity()]
+  }
+}
+
+private extension Game {
+  func positionIdentity() -> PositionIdentity {
+    .init(
+      pieces: .init(uniqueKeysWithValues: board.map { square, piece in
+        (square, piece)
+      }),
+      toMove: toMove,
+      enPassantSquare: board.enPassantSquare,
+      castlingRights: castlingRights()
+    )
+  }
+
+  func castlingRights() -> Set<CastlingRight> {
+    .init(Piece.Color.allCases.flatMap { color in
+      Castle.allCases.compactMap { castle in
+        let kingSquare = Square(file: .e, rank: color.backRank)
+        let rookSquare = color.castleRookSquare(castle: castle)
+        let king = Piece(color: color, figure: .king)
+        let rook = Piece(color: color, figure: .rook)
+
+        guard board[kingSquare] == king,
+              board[rookSquare] == rook,
+              !hasPieceMoved(king, from: kingSquare),
+              !hasPieceMoved(rook, from: rookSquare) else {
+          return nil
+        }
+
+        return .init(color: color, castle: castle)
+      }
+    })
+  }
+}
+
+private extension Piece.Color {
+  func castleRookSquare(castle: Castle) -> Square {
+    .init(file: castle == .short ? .h : .a, rank: backRank)
   }
 }
 

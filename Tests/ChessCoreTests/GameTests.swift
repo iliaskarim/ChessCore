@@ -438,44 +438,56 @@ struct GameTests {
   // MARK: - Game End
 
   @Test
-  func testFiftyMoveRule() throws {
-    let game = Game(board: [
-      .init(file: .e, rank: .one): .init(color: .white, figure: .king),
-      .init(file: .b, rank: .one): .init(color: .white, figure: .knight),
-      .init(file: .e, rank: .eight): .init(color: .black, figure: .king),
-      .init(file: .g, rank: .eight): .init(color: .black, figure: .knight)
-    ])
+  func testThreefoldRepetition() throws {
+    let game = Game()
 
-    let na3 = Translation(
+    let nf3 = Translation(
       figure: .knight,
-      targetSquare: .init(file: .a, rank: .three)
+      targetSquare: .init(file: .f, rank: .three)
     )
-    let nh6 = Translation(
+    let nf6 = Translation(
       figure: .knight,
-      targetSquare: .init(file: .h, rank: .six)
+      targetSquare: .init(file: .f, rank: .six)
     )
-    let nb1 = Translation(
+    let ng1 = Translation(
       figure: .knight,
-      targetSquare: .init(file: .b, rank: .one)
+      targetSquare: .init(file: .g, rank: .one)
     )
     let ng8 = Translation(
       figure: .knight,
       targetSquare: .init(file: .g, rank: .eight)
     )
 
-    let moves = [na3, nh6, nb1, ng8]
-    for ply in 0 ..< 100 {
+    let moves = [nf3, nf6, ng1, ng8]
+    for ply in 0 ..< 8 {
       try game.play(moves[ply % moves.count])
-      let playedPly = ply + 1
-      if playedPly < 100, case let .toMove(actualToMove) = game.status {
-        let expectedToMove: Piece.Color = playedPly.isMultiple(of: 2) ? .white : .black
-        #expect(actualToMove == expectedToMove)
-      } else if playedPly < 100 {
-        #expect(Bool(false), "Game ended early at ply \(playedPly): \(game.status)")
-      }
     }
 
-    #expect(game.status == .draw(FiftyMoveDrawCondition.self))
+    #expect(game.status == .draw(ThreefoldRepetitionDrawCondition.self))
+  }
+
+  @Test
+  func testFiftyMoveRule() {
+    let board = Board(pieces: [
+      .init(file: .e, rank: .one): .init(color: .white, figure: .king),
+      .init(file: .b, rank: .one): .init(color: .white, figure: .knight),
+      .init(file: .e, rank: .eight): .init(color: .black, figure: .king),
+      .init(file: .g, rank: .eight): .init(color: .black, figure: .knight)
+    ])
+    let move = Translation(
+      figure: .knight,
+      targetSquare: .init(file: .a, rank: .three)
+    )
+    let turns = (0 ..< 100).map { _ in
+      Turn.move(move, punctuation: nil)
+    }
+    let context = DrawContext(
+      board: board,
+      turns: turns,
+      positionIdentities: []
+    )
+
+    #expect(FiftyMoveDrawCondition.isDraw(in: context))
   }
 
   @Test
@@ -666,5 +678,10 @@ struct GameTests {
   @Test
   func testStalemateDrawConditionName() {
     #expect(StalemateDrawCondition.name == "stalemate")
+  }
+
+  @Test
+  func testThreefoldRepetitionDrawConditionName() {
+    #expect(ThreefoldRepetitionDrawCondition.name == "threefold repetition")
   }
 }

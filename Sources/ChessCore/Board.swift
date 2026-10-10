@@ -296,7 +296,7 @@ public struct Board {
 
   weak var dataSource: BoardDataSource?
 
-  fileprivate let enPassantSquare: Square?
+  let enPassantSquare: Square?
 
   fileprivate let pieces: [Square: Piece]
 

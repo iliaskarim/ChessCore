@@ -4,6 +4,7 @@ public struct DrawContext {
   public let board: Board
 
   let turns: [Turn]
+  let positionIdentities: [PositionIdentity]
 
   var isDrawByAgreement: Bool {
     guard case .end(nil) = turns.last else {
@@ -25,8 +26,36 @@ public struct DrawContext {
     }
   }
 
-  init(board: Board, turns: [Turn]) {
+  var isDrawByThreefoldRepetition: Bool {
+    guard let currentPositionIdentity = positionIdentities.last else {
+      return false
+    }
+
+    return positionIdentities.filter { positionIdentity in
+      positionIdentity == currentPositionIdentity
+    }
+    .count >= 3
+  }
+
+  init(board: Board, turns: [Turn], positionIdentities: [PositionIdentity]) {
     self.board = board
     self.turns = turns
+    self.positionIdentities = positionIdentities
   }
+}
+
+struct PositionIdentity: Hashable {
+  let pieces: [Square: Piece]
+
+  let toMove: Piece.Color
+
+  let enPassantSquare: Square?
+
+  let castlingRights: Set<CastlingRight>
+}
+
+struct CastlingRight: Hashable {
+  let color: Piece.Color
+
+  let castle: Castle
 }

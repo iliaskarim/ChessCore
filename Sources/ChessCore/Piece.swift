@@ -1,7 +1,7 @@
 /// A chess piece.
 ///
 /// Each piece is identified by its ``Color`` (side) and ``Figure`` (kind).
-public struct Piece: Equatable, Sendable {
+public struct Piece: Equatable, Hashable, Sendable {
   /// A piece's color.
   ///
   /// A color identifies which side a piece belongs to.
