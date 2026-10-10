@@ -600,6 +600,74 @@ struct GameTests {
     }
   }
 
+  @Test
+  func testInsufficientMaterialWithBareKings() {
+    let game = Game(board: [
+      .init(file: .e, rank: .one): .init(color: .white, figure: .king),
+      .init(file: .e, rank: .eight): .init(color: .black, figure: .king)
+    ])
+
+    #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
+  }
+
+  @Test
+  func testInsufficientMaterialWithKingAndBishopAgainstKing() {
+    let game = Game(board: [
+      .init(file: .e, rank: .one): .init(color: .white, figure: .king),
+      .init(file: .c, rank: .one): .init(color: .white, figure: .bishop),
+      .init(file: .e, rank: .eight): .init(color: .black, figure: .king)
+    ])
+
+    #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
+  }
+
+  @Test
+  func testInsufficientMaterialWithKingAndKnightAgainstKing() {
+    let game = Game(board: [
+      .init(file: .e, rank: .one): .init(color: .white, figure: .king),
+      .init(file: .b, rank: .one): .init(color: .white, figure: .knight),
+      .init(file: .e, rank: .eight): .init(color: .black, figure: .king)
+    ])
+
+    #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
+  }
+
+  @Test
+  func testInsufficientMaterialWithSameColorBishops() {
+    let game = Game(board: [
+      .init(file: .e, rank: .one): .init(color: .white, figure: .king),
+      .init(file: .c, rank: .one): .init(color: .white, figure: .bishop),
+      .init(file: .e, rank: .eight): .init(color: .black, figure: .king),
+      .init(file: .f, rank: .eight): .init(color: .black, figure: .bishop)
+    ])
+
+    #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
+  }
+
+  @Test
+  func testOppositeColorBishopsAreNotInsufficientMaterial() {
+    let game = Game(board: [
+      .init(file: .e, rank: .one): .init(color: .white, figure: .king),
+      .init(file: .c, rank: .one): .init(color: .white, figure: .bishop),
+      .init(file: .e, rank: .eight): .init(color: .black, figure: .king),
+      .init(file: .c, rank: .eight): .init(color: .black, figure: .bishop)
+    ])
+
+    #expect(game.status == .toMove(.white))
+  }
+
+  @Test
+  func testTwoKnightsAgainstKingIsNotInsufficientMaterial() {
+    let game = Game(board: [
+      .init(file: .e, rank: .one): .init(color: .white, figure: .king),
+      .init(file: .b, rank: .one): .init(color: .white, figure: .knight),
+      .init(file: .g, rank: .one): .init(color: .white, figure: .knight),
+      .init(file: .e, rank: .eight): .init(color: .black, figure: .king)
+    ])
+
+    #expect(game.status == .toMove(.white))
+  }
+
   // MARK: - Promotion
 
   @Test
@@ -683,5 +751,10 @@ struct GameTests {
   @Test
   func testThreefoldRepetitionDrawConditionName() {
     #expect(ThreefoldRepetitionDrawCondition.name == "threefold repetition")
+  }
+
+  @Test
+  func testInsufficientMaterialDrawConditionName() {
+    #expect(InsufficientMaterialDrawCondition.name == "insufficient material")
   }
 }

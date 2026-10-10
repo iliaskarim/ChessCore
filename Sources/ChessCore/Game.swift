@@ -60,7 +60,8 @@ public class Game: BoardDataSource, ObservableObject {
       AgreementDrawCondition.self,
       StalemateDrawCondition.self,
       FiftyMoveDrawCondition.self,
-      ThreefoldRepetitionDrawCondition.self
+      ThreefoldRepetitionDrawCondition.self,
+      InsufficientMaterialDrawCondition.self
     ]
   }
 
