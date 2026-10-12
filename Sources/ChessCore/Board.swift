@@ -3,25 +3,22 @@ private extension Move {
     switch self {
     case let .translation(translation):
       [{ board in
-        let targetSquare = translation.targetSquare
-
-        var pieces = board.pieces.filter { key, _ in key != square }
-          .merging([
-            targetSquare: .init(
-              color: piece.color,
-              figure: translation.promotion ?? piece.figure
-            )
-          ]) { _, new in new }
-
-        if piece.figure == .pawn,
-           targetSquare == board.enPassantSquare + piece.color.forwardUnitVector {
-          pieces = pieces.filter { key, _ in key != board.enPassantSquare }
-        }
-
-        return .init(
-          pieces: pieces,
-          enPassantSquare: piece.figure == .pawn && abs(targetSquare.rank.rawValue - square.rank.rawValue) == 2 ?
-            targetSquare
+        .init(
+          pieces: board.pieces.filter { key, _ in key != square }
+            .merging([
+              translation.targetSquare: .init(
+                color: piece.color,
+                figure: translation.promotion ?? piece.figure
+              )
+            ]) { _, new in new }
+            .filter { key, _ in
+              piece.figure != .pawn
+                || translation.targetSquare != board.enPassantSquare + piece.color.forwardUnitVector
+                || key != board.enPassantSquare
+            },
+          enPassantSquare: piece.figure == .pawn
+            && abs(translation.targetSquare.rank.rawValue - square.rank.rawValue) == 2 ?
+            translation.targetSquare
             : nil
         )
       }]
