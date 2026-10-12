@@ -57,6 +57,7 @@ public class Game: BoardDataSource, ObservableObject {
     [
       AgreementDrawCondition.self,
       StalemateDrawCondition.self,
+      InsufficientMaterialDrawCondition.self,
       FiftyMoveDrawCondition.self
     ]
   }
