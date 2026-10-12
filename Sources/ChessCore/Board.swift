@@ -1,17 +1,4 @@
 private extension Move {
-  static func ~= (lhs: Self, rhs: Self) -> Bool {
-    switch (lhs, rhs) {
-    case let (.castling(lhsCastling), .castling(rhsCastling)):
-      lhsCastling == rhsCastling
-
-    case let (.translation(lhsTranslation), .translation(rhsTranslation)):
-      lhsTranslation ~= rhsTranslation
-
-    default:
-      false
-    }
-  }
-
   func transforms(for piece: Piece, from square: Square) -> [Board.Transform] {
     switch self {
     case let .translation(translation):
@@ -75,23 +62,6 @@ private extension Move.Castling {
 
   func rookTargetSquare(for color: Piece.Color) -> Square {
     .init(file: self == .kingside ? .f : .d, rank: color.backRank)
-  }
-}
-
-private extension Move.Translation {
-  static func ~= (lhs: Self, rhs: Self) -> Bool {
-    if let lhsFile = lhs.disambiguationFile, let rhsFile = rhs.disambiguationFile, lhsFile != rhsFile {
-      return false
-    }
-
-    if let lhsRank = lhs.disambiguationRank, let rhsRank = rhs.disambiguationRank, lhsRank != rhsRank {
-      return false
-    }
-
-    return lhs.figure == rhs.figure
-      && lhs.isCapture == rhs.isCapture
-      && lhs.targetSquare == rhs.targetSquare
-      && lhs.promotion == rhs.promotion
   }
 }
 
@@ -326,7 +296,29 @@ public struct Board {
     let matchingMoves = flatMap { square, piece in
       moves(for: piece, from: square, isCapture: move.isCapture)
         .filter { candidate in
-          candidate ~= move
+          switch (candidate, move) {
+          case let (.castling(candidateCastling), .castling(moveCastling)):
+            candidateCastling == moveCastling
+
+          case let (.translation(candidateTranslation), .translation(moveTranslation)):
+            if let candidateFile = candidateTranslation.disambiguationFile,
+               let moveFile = moveTranslation.disambiguationFile,
+               candidateFile != moveFile {
+              false
+            } else if let candidateRank = candidateTranslation.disambiguationRank,
+                      let moveRank = moveTranslation.disambiguationRank,
+                      candidateRank != moveRank {
+              false
+            } else {
+              candidateTranslation.figure == moveTranslation.figure
+                && candidateTranslation.isCapture == moveTranslation.isCapture
+                && candidateTranslation.targetSquare == moveTranslation.targetSquare
+                && candidateTranslation.promotion == moveTranslation.promotion
+            }
+
+          default:
+            false
+          }
         }
         .map { candidate in
           (candidate, piece, square)
