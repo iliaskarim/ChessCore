@@ -2,8 +2,6 @@ import Testing
 @testable import ChessCore
 
 struct PieceTests {
-  // MARK: - Piece.Color
-
   @Test
   func pieceColorBackRank() {
     #expect(Piece.Color.white.backRank == .one)
