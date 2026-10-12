@@ -67,6 +67,17 @@
       }
     },
     {
+      "label": "Analyze all files",
+      "type": "shell",
+      "command": "bash scripts/swiftlint-analyze",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
       "label": "Format and lint all files",
       "problemMatcher": [],
       "dependsOn": [
