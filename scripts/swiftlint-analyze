@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+# Clean-build ChessCore and run SwiftLint analyzer rules.
+#
+# Analyzer rules need a compiler log. `swiftlint lint` does not run them.
+# A cached build can succeed without compiling Swift, so analyze reports
+# 0 files. `clean` forces every Swift file into the log.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+SCHEME="ChessCore"
+DESTINATION="platform=macOS"
+CONFIG=".swiftlint.yml"
+DEFAULT_LOG="build/xcodebuild.log"
+COMPILER_LOG=""
+DRY_RUN=0
+
+usage() {
+  cat <<'EOF'
+Usage:
+  swiftlint-analyze [options]
+
+Runs `xcodebuild clean build-for-testing` for the ChessCore scheme and
+then `swiftlint analyze` on Sources and Tests.
+
+Must be run on a Mac with Xcode and `swiftlint` on PATH.
+
+Do not analyze a failed or incremental build. A cached `build-for-testing`
+can succeed while skipping Swift compile, so analyze reports 0 files.
+
+Options:
+  --compiler-log-path PATH  Skip xcodebuild; analyze this log
+  --destination DEST        xcodebuild -destination (default: platform=macOS)
+  --scheme NAME             xcodebuild -scheme (default: ChessCore)
+  --dry-run                 Print the xcodebuild and analyze commands
+  -h, --help                Show this help
+EOF
+}
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --compiler-log-path)
+      COMPILER_LOG="${2:-}"
+      [[ -n "$COMPILER_LOG" ]] || die "--compiler-log-path requires a value"
+      shift 2
+      ;;
+    --destination)
+      DESTINATION="${2:-}"
+      [[ -n "$DESTINATION" ]] || die "--destination requires a value"
+      shift 2
+      ;;
+    --scheme)
+      SCHEME="${2:-}"
+      [[ -n "$SCHEME" ]] || die "--scheme requires a value"
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+# On failure, print compiler diagnostics instead of only the xcodebuild footer.
+run_xcodebuild() {
+  local log_path="$1"
+  shift
+  set -o pipefail
+  if ! xcodebuild "$@" 2>&1 | tee "$log_path"; then
+    echo >&2
+    echo "error: xcodebuild failed — diagnostics from ${log_path}:" >&2
+    if ! grep -E '(^|:) error:|fatal error:' "$log_path" >&2; then
+      echo "(no 'error:' lines found; see full log: ${log_path})" >&2
+      tail -n 80 "$log_path" >&2 || true
+    fi
+    echo "Full log: ${log_path}" >&2
+    exit 1
+  fi
+}
+
+print_or_run() {
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    local first="$1"
+    shift
+    printf '%s' "$first"
+    local arg
+    for arg in "$@"; do
+      if [[ "$arg" == *[[:space:]\']* ]]; then
+        printf " '%s'" "${arg//\'/\'\\\'\'}"
+      else
+        printf ' %s' "$arg"
+      fi
+    done
+    printf '\n'
+    return 0
+  fi
+  "$@"
+}
+
+SKIP_BUILD=0
+if [[ -n "$COMPILER_LOG" ]]; then
+  SKIP_BUILD=1
+else
+  COMPILER_LOG="$DEFAULT_LOG"
+fi
+
+if [[ "$SKIP_BUILD" -eq 1 && "$DRY_RUN" -eq 0 && ! -f "$COMPILER_LOG" ]]; then
+  die "compiler log not found: $COMPILER_LOG"
+fi
+
+if [[ "$DRY_RUN" -eq 0 ]]; then
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    die "this script must run on macOS with Xcode"
+  fi
+  if [[ "$SKIP_BUILD" -eq 0 ]]; then
+    command -v xcodebuild >/dev/null 2>&1 || die "xcodebuild not found (install Xcode)"
+  fi
+  command -v swiftlint >/dev/null 2>&1 || die "swiftlint not found (install SwiftLint)"
+  [[ -f "$CONFIG" ]] || die "missing $CONFIG"
+fi
+
+analyze_args=(
+  analyze
+  --config "$CONFIG"
+  --compiler-log-path "$COMPILER_LOG"
+  Sources
+  Tests
+)
+
+if [[ "$SKIP_BUILD" -eq 1 ]]; then
+  echo "Analyzing $COMPILER_LOG (skipped xcodebuild)" >&2
+  print_or_run swiftlint "${analyze_args[@]}"
+  exit 0
+fi
+
+echo "Building $SCHEME (clean build-for-testing) → $COMPILER_LOG" >&2
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  print_or_run xcodebuild \
+    -scheme "$SCHEME" \
+    -destination "$DESTINATION" \
+    clean build-for-testing
+  print_or_run swiftlint "${analyze_args[@]}"
+  exit 0
+fi
+
+mkdir -p build
+run_xcodebuild "$COMPILER_LOG" \
+  -scheme "$SCHEME" \
+  -destination "$DESTINATION" \
+  clean build-for-testing
+
+print_or_run swiftlint "${analyze_args[@]}"
