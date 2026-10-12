@@ -35,6 +35,17 @@
       }
     },
     {
+      "label": "Test current file",
+      "type": "shell",
+      "command": "swift test --filter ${fileDirnameBasename}.${fileBasenameNoExtension}",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
       "label": "Format all files",
       "type": "shell",
       "command": "swiftformat -v .",
