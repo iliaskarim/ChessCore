@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# Run the unit tests with coverage and write an HTML report to coverage/.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if ! xcrun --find llvm-cov >/dev/null 2>&1; then
+    echo "error: llvm-cov not found (install Xcode)" >&2
+    exit 1
+  fi
+  llvm_cov=(xcrun llvm-cov)
+  demangler="$(xcrun --find swift-demangle 2>/dev/null || true)"
+else
+  if ! command -v llvm-cov >/dev/null 2>&1; then
+    echo "error: llvm-cov not found" >&2
+    exit 1
+  fi
+  llvm_cov=(llvm-cov)
+  demangler="$(command -v swift-demangle || true)"
+fi
+
+swift test --enable-code-coverage
+
+bin_dir="$(swift build --show-bin-path)"
+profdata="${bin_dir}/codecov/default.profdata"
+if [[ ! -f "$profdata" ]]; then
+  echo "error: coverage profile not found at ${profdata}" >&2
+  exit 1
+fi
+
+bundle="$(find "$bin_dir" -maxdepth 1 -name '*PackageTests.xctest' -print -quit)"
+if [[ -z "$bundle" ]]; then
+  echo "error: *PackageTests.xctest not found under ${bin_dir}" >&2
+  exit 1
+fi
+
+if [[ -d "$bundle" ]]; then
+  name="$(basename "$bundle" .xctest)"
+  binary="${bundle}/Contents/MacOS/${name}"
+else
+  binary="$bundle"
+fi
+
+if [[ ! -f "$binary" ]]; then
+  echo "error: test binary not found at ${binary}" >&2
+  exit 1
+fi
+
+out="${ROOT}/coverage"
+rm -rf "$out"
+
+cov_args=(
+  "$binary"
+  "-instr-profile=${profdata}"
+  "-ignore-filename-regex=/Tests/|\\.build/"
+)
+if [[ -n "$demangler" ]]; then
+  cov_args+=("-Xdemangler=${demangler}")
+fi
+
+show_args=(
+  -format=html
+  -output-dir="$out"
+  -project-title=ChessCore
+  -show-line-counts-or-regions
+)
+# Swift 6.0's llvm-cov rejects -show-directory-coverage. Use it when present
+# so newer toolchains still write a per-directory index.
+help="$("${llvm_cov[@]}" show --help 2>&1 || true)"
+if [[ "$help" == *"show-directory-coverage"* ]]; then
+  show_args+=(-show-directory-coverage)
+fi
+
+"${llvm_cov[@]}" report "${cov_args[@]}"
+"${llvm_cov[@]}" show "${cov_args[@]}" "${show_args[@]}"
+
+# Linux CI runs this script as root inside Docker. upload-artifact cannot
+# read a directory that is not world-accessible.
+chmod -R a+rX "$out"
+
+echo "Wrote ${out}/index.html"

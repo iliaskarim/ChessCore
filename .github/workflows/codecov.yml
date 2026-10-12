@@ -1,6 +1,10 @@
 name: Unit Test Workflow
 on: pull_request
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   tests:
     name: Unit-Tests
@@ -11,4 +15,10 @@ jobs:
       - name: Print Swift version
         run: swift --version
       - name: Run unit tests
-        run: swift test --enable-code-coverage
+        run: ./scripts/coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-macos
+          path: coverage
+          if-no-files-found: error
