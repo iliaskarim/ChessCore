@@ -337,20 +337,19 @@ public struct Board {
       throw MoveError.ambiguousMove(candidates: matchingMoves.map(\.0))
     }
 
-    guard let (_, piece, square) = matchingMoves.first,
-          let transformedBoard = applying(move: move, for: piece, from: square) else {
+    guard let (_, piece, square) = matchingMoves.first else {
       throw MoveError.illegalMove
     }
 
-    return transformedBoard
+    return try applying(move: move, for: piece, from: square)
   }
 
-  func applying(move: Move, for piece: Piece, from square: Square) -> Self? {
-    move.transforms(for: piece, from: square).reduce(self) { board, transform in
-      var transformedBoard = board.map(transform)
-      transformedBoard?.dataSource = dataSource
-      guard let transformedBoard, !transformedBoard.isInCheck else {
-        return nil
+  func applying(move: Move, for piece: Piece, from square: Square) throws -> Self {
+    try move.transforms(for: piece, from: square).reduce(self) { board, transform in
+      var transformedBoard = transform(board)
+      transformedBoard.dataSource = dataSource
+      guard !transformedBoard.isInCheck else {
+        throw MoveError.illegalMoveIntoCheck
       }
 
       return transformedBoard
@@ -378,7 +377,7 @@ public struct Board {
         moves(for: piece, from: square, isCapture: true)
     )
     .filter { move in
-      applying(move: move, for: piece, from: square) != nil
+      (try? applying(move: move, for: piece, from: square)) != nil
     }
   }
 

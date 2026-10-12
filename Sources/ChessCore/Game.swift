@@ -122,7 +122,8 @@ public class Game: BoardDataSource, ObservableObject {
   ///   - move: The move.
   /// - Throws: `GameStateError.gameOver` if the game is already over,
   ///   `MoveError.ambiguousMove(candidates:)` if multiple moves match the
-  ///   input, or `MoveError.illegalMove` if no legal matching move exists.
+  ///   input, `MoveError.illegalMoveIntoCheck` if the move leaves the mover in
+  ///   check, or `MoveError.illegalMove` if no legal matching move exists.
   public func play(_ move: Move) throws {
     guard case .toMove = status else {
       throw GameStateError.gameOver

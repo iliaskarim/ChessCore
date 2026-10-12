@@ -86,7 +86,7 @@ struct GameTests {
     ])
 
     let queensideCastle = Move.castling(.queenside)
-    #expect(throws: MoveError.illegalMove) {
+    #expect(throws: MoveError.illegalMoveIntoCheck) {
       try game.play(queensideCastle)
     }
 
@@ -134,7 +134,7 @@ struct GameTests {
     ])
 
     let queensideCastle = Move.castling(.queenside)
-    #expect(throws: MoveError.illegalMove) {
+    #expect(throws: MoveError.illegalMoveIntoCheck) {
       try game.play(queensideCastle)
     }
 
@@ -182,7 +182,7 @@ struct GameTests {
     ])
 
     let kingsideCastle = Move.castling(.kingside)
-    #expect(throws: MoveError.illegalMove) {
+    #expect(throws: MoveError.illegalMoveIntoCheck) {
       try game.play(kingsideCastle)
     }
 
@@ -230,7 +230,7 @@ struct GameTests {
     ])
 
     let kingsideCastle = Move.castling(.kingside)
-    #expect(throws: MoveError.illegalMove) {
+    #expect(throws: MoveError.illegalMoveIntoCheck) {
       try game.play(kingsideCastle)
     }
 
