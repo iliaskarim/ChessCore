@@ -1,4 +1,4 @@
-enum Turn {
+enum Turn: Equatable {
   enum Punctuation: String {
     case check = "+"
 

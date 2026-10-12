@@ -276,6 +276,16 @@ enum GameTests {
   @Suite("Game End")
   struct GameEnd {
     @Test
+    func drawByAgreement() throws {
+      let game = Game()
+
+      try game.endGame(victor: nil)
+
+      #expect(game.status == .draw(AgreementDrawCondition.self))
+      #expect(game.status.description == "Draw by agreement.")
+    }
+
+    @Test
     func fiftyMoveRule() throws {
       let game = Game(board: [
         .e1: .whiteKing,
@@ -294,7 +304,8 @@ enum GameTests {
         try game.play(moves[ply % moves.count])
       }
 
-      #expect(game.status == .draw(.byFiftyMoveRule))
+      #expect(game.status == .draw(FiftyMoveDrawCondition.self))
+      #expect(game.status.description == "Draw by fifty-move rule.")
     }
 
     @Test
@@ -344,7 +355,8 @@ enum GameTests {
       let ke6 = Move.translation(.init(figure: .king, targetSquare: .e6))
       try game.play(ke6)
 
-      #expect(game.status == .draw(.byStalemate))
+      #expect(game.status == .draw(StalemateDrawCondition.self))
+      #expect(game.status.description == "Draw by stalemate.")
     }
   }
 

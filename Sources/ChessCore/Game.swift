@@ -16,18 +16,6 @@ private extension Board.Status {
   }
 }
 
-private extension Move {
-  var isPawnMove: Bool {
-    switch self {
-    case let .translation(translation):
-      translation.figure == .pawn
-
-    case .castling:
-      false
-    }
-  }
-}
-
 /// A chess game.
 ///
 /// A game owns the current board position and applies moves while tracking game
@@ -37,29 +25,40 @@ public class Game: BoardDataSource, ObservableObject {
   ///
   /// A game is either in progress, won, or drawn.
   public enum Status: Equatable {
-    /// A draw result.
-    ///
-    /// Games are drawn by agreement, the fifty-move rule, or stalemate.
-    public enum Draw {
-      /// The players agreed to a draw.
-      case byAgreement
-
-      /// Fifty consecutive moves were played without a pawn move or capture.
-      case byFiftyMoveRule
-
-      /// The side to move has no legal moves and is not in check.
-      case byStalemate
-    }
-
     /// A player has won the game, with the winning color and whether the win
     /// was by resignation or checkmate.
     case winner(Piece.Color, isByResignation: Bool)
 
     /// The game ended in a draw.
-    case draw(Draw)
+    case draw(any DrawCondition.Type)
 
     /// The game is in progress, with the side to move.
     case toMove(Piece.Color)
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+      switch (lhs, rhs) {
+      case let (.winner(lhsColor, lhsIsByResignation), .winner(rhsColor, rhsIsByResignation)):
+        lhsColor == rhsColor && lhsIsByResignation == rhsIsByResignation
+
+      case let (.draw(lhsCondition), .draw(rhsCondition)):
+        ObjectIdentifier(lhsCondition) == ObjectIdentifier(rhsCondition)
+
+      case let (.toMove(lhsColor), .toMove(rhsColor)):
+        lhsColor == rhsColor
+
+      default:
+        false
+      }
+    }
+  }
+
+  /// Draw conditions evaluated in order.
+  static var drawConditions: [any GameDrawCondition.Type] {
+    [
+      AgreementDrawCondition.self,
+      StalemateDrawCondition.self,
+      FiftyMoveDrawCondition.self
+    ]
   }
 
   /// Game board.
@@ -67,32 +66,19 @@ public class Game: BoardDataSource, ObservableObject {
 
   /// Game status.
   public var status: Status {
-    switch (turns.last, board.status) {
-    case let (.end(.some(victor)), _):
+    switch turns.last {
+    case let .end(.some(victor))?:
       .winner(victor, isByResignation: true)
 
-    case (.end(nil), _):
-      .draw(.byAgreement)
-
-    case (_, .checkmate):
-      .winner(toMove.opposite, isByResignation: false)
-
-    case (_, .stalemate):
-      .draw(.byStalemate)
-
     default:
-      if turns.count < 100 || turns.suffix(100).contains(where: { turn in
-        switch turn {
-        case let .move(move, _):
-          move.isPawnMove || move.isCapture
-
-        default:
-          false
-        }
+      if board.status == .checkmate {
+        .winner(toMove.opposite, isByResignation: false)
+      } else if let condition = Self.drawConditions.first(where: { condition in
+        condition.isDraw(board: board, turns: turns)
       }) {
-        .toMove(toMove)
+        .draw(condition)
       } else {
-        .draw(.byFiftyMoveRule)
+        .toMove(toMove)
       }
     }
   }
@@ -175,26 +161,11 @@ extension Game.Status: CustomStringConvertible {
     case let .winner(color, _):
       "\(color) \(String.wins)."
 
-    case let .draw(draw):
-      "\(draw)"
+    case let .draw(condition):
+      "\(String.drawBy) \(condition.name)."
 
     case let .toMove(color):
       "\(color) \(String.toMove)."
-    }
-  }
-}
-
-extension Game.Status.Draw: CustomStringConvertible {
-  public var description: String {
-    switch self {
-    case .byAgreement:
-      "\(String.drawBy) \(String.agreement)."
-
-    case .byFiftyMoveRule:
-      "\(String.drawBy) \(String.fiftyMoveRule)."
-
-    case .byStalemate:
-      "\(String.drawBy) \(String.stalemate.lowercased())."
     }
   }
 }
