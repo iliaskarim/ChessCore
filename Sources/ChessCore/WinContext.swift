@@ -8,14 +8,6 @@ public struct WinContext {
 
   let turns: [Turn]
 
-  var resignationVictor: Piece.Color? {
-    guard case let .end(victor?) = turns.last else {
-      return nil
-    }
-
-    return victor
-  }
-
   init(board: Board, turns: [Turn], toMove: Piece.Color) {
     self.board = board
     self.turns = turns

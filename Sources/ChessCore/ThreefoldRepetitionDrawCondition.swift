@@ -5,6 +5,13 @@ public struct ThreefoldRepetitionDrawCondition: DrawCondition {
   }
 
   public static func isDraw(in context: DrawContext) -> Bool {
-    context.isDrawByThreefoldRepetition
+    guard let currentPositionIdentity = context.positionIdentities.last else {
+      return false
+    }
+
+    return context.positionIdentities.filter { positionIdentity in
+      positionIdentity == currentPositionIdentity
+    }
+    .count >= 3
   }
 }

@@ -5,6 +5,10 @@ public struct AgreementDrawCondition: DrawCondition {
   }
 
   public static func isDraw(in context: DrawContext) -> Bool {
-    context.isDrawByAgreement
+    guard case .end(nil) = context.turns.last else {
+      return false
+    }
+
+    return true
   }
 }

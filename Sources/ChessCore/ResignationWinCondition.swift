@@ -5,6 +5,10 @@ public struct ResignationWinCondition: WinCondition {
   }
 
   public static func winner(in context: WinContext) -> Piece.Color? {
-    context.resignationVictor
+    guard case let .end(victor?) = context.turns.last else {
+      return nil
+    }
+
+    return victor
   }
 }
