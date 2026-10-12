@@ -1,10 +1,26 @@
 /// A capturing move.
 public struct Capture: Move, Hashable {
+  public var isCapture: Bool {
+    true
+  }
+
+  public var moveTargetSquare: Square? {
+    translation.targetSquare
+  }
+
+  public var movingFigure: Piece.Figure? {
+    translation.figure
+  }
+
   /// The captured move's translation.
   public let translation: Translation
 
-  init(_ translation: Translation) {
-    self.translation = translation
+  public func isSameMove(as move: any Move) -> Bool {
+    guard let move = move as? Self else {
+      return false
+    }
+
+    return self == move
   }
 
   /// Creates a capture describing a non-castling move.
@@ -28,24 +44,8 @@ public struct Capture: Move, Hashable {
     )
   }
 
-  public var movingFigure: Piece.Figure? {
-    translation.figure
-  }
-
-  public var moveTargetSquare: Square? {
-    translation.targetSquare
-  }
-
-  public var isCapture: Bool {
-    true
-  }
-
-  public func isSameMove(as move: any Move) -> Bool {
-    guard let move = move as? Self else {
-      return false
-    }
-
-    return self == move
+  init(_ translation: Translation) {
+    self.translation = translation
   }
 }
 

@@ -9,20 +9,20 @@ public struct Translation: Move, Hashable {
   /// Disambiguation rank, if any.
   public let disambiguationRank: Square.Rank?
 
-  /// Square the figure moves to.
-  public let targetSquare: Square
-
-  public var movingFigure: Piece.Figure? {
-    figure
+  public var isCapture: Bool {
+    false
   }
 
   public var moveTargetSquare: Square? {
     targetSquare
   }
 
-  public var isCapture: Bool {
-    false
+  public var movingFigure: Piece.Figure? {
+    figure
   }
+
+  /// Square the figure moves to.
+  public let targetSquare: Square
 
   public func isSameMove(as move: any Move) -> Bool {
     guard let move = move as? Self else {

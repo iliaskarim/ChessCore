@@ -16,10 +16,16 @@ private extension Board {
   }
 }
 
+private extension Piece.Color {
+  func castleRookSquare(castle: Castle) -> Square {
+    .init(file: castle == .short ? .h : .a, rank: backRank)
+  }
+}
+
 /// A chess game.
 ///
-/// A game owns the current board position and applies moves while tracking
-/// game status such as whose turn it is and whether the game has ended.
+/// A game owns the current board position and applies moves while tracking game
+/// status such as whose turn it is and whether the game has ended.
 public class Game: BoardDataSource, ObservableObject {
   /// A game's status.
   ///
@@ -33,6 +39,25 @@ public class Game: BoardDataSource, ObservableObject {
 
     /// The game is in progress, with the side to move.
     case toMove(Piece.Color)
+  }
+
+  /// Draw conditions evaluated for the game.
+  public static var drawConditions: [any DrawCondition.Type] {
+    [
+      AgreementDrawCondition.self,
+      StalemateDrawCondition.self,
+      FiftyMoveDrawCondition.self,
+      ThreefoldRepetitionDrawCondition.self,
+      InsufficientMaterialDrawCondition.self
+    ]
+  }
+
+  /// Win conditions evaluated for the game.
+  public static var winConditions: [any WinCondition.Type] {
+    [
+      ResignationWinCondition.self,
+      CheckmateWinCondition.self
+    ]
   }
 
   /// Game board.
@@ -50,48 +75,13 @@ public class Game: BoardDataSource, ObservableObject {
     )
   }
 
-  /// Win conditions evaluated for the game.
-  public static var winConditions: [any WinCondition.Type] {
-    [
-      ResignationWinCondition.self,
-      CheckmateWinCondition.self
-    ]
-  }
-
-  /// Draw conditions evaluated for the game.
-  public static var drawConditions: [any DrawCondition.Type] {
-    [
-      AgreementDrawCondition.self,
-      StalemateDrawCondition.self,
-      FiftyMoveDrawCondition.self,
-      ThreefoldRepetitionDrawCondition.self,
-      InsufficientMaterialDrawCondition.self
-    ]
-  }
-
-  private func status(winContext: WinContext, drawContext: DrawContext) -> Status {
-    for condition in Self.winConditions {
-      if let winner = condition.winner(in: winContext) {
-        return .winner(winner, by: condition)
-      }
-    }
-
-    if let condition = Self.drawConditions.first(where: { condition in
-      condition.isDraw(in: drawContext)
-    }) {
-      return .draw(condition)
-    }
-
-    return .toMove(toMove)
-  }
-
   var toMove: Piece.Color {
     turns.count.isMultiple(of: 2) ? .white : .black
   }
 
-  private var turns = [Turn]()
-
   private var positionIdentities = [PositionIdentity]()
+
+  private var turns = [Turn]()
 
   /// Ends the game.
   ///
@@ -150,20 +140,25 @@ public class Game: BoardDataSource, ObservableObject {
     self.board.dataSource = self
     positionIdentities = [positionIdentity()]
   }
+
+  private func status(winContext: WinContext, drawContext: DrawContext) -> Status {
+    for condition in Self.winConditions {
+      if let winner = condition.winner(in: winContext) {
+        return .winner(winner, by: condition)
+      }
+    }
+
+    if let condition = Self.drawConditions.first(where: { condition in
+      condition.isDraw(in: drawContext)
+    }) {
+      return .draw(condition)
+    }
+
+    return .toMove(toMove)
+  }
 }
 
 private extension Game {
-  func positionIdentity() -> PositionIdentity {
-    .init(
-      pieces: .init(uniqueKeysWithValues: board.map { square, piece in
-        (square, piece)
-      }),
-      toMove: toMove,
-      enPassantSquare: board.enPassantSquare,
-      castlingRights: castlingRights()
-    )
-  }
-
   func castlingRights() -> Set<CastlingRight> {
     .init(Piece.Color.allCases.flatMap { color in
       Castle.allCases.compactMap { castle in
@@ -183,11 +178,16 @@ private extension Game {
       }
     })
   }
-}
 
-private extension Piece.Color {
-  func castleRookSquare(castle: Castle) -> Square {
-    .init(file: castle == .short ? .h : .a, rank: backRank)
+  func positionIdentity() -> PositionIdentity {
+    .init(
+      pieces: .init(uniqueKeysWithValues: board.map { square, piece in
+        (square, piece)
+      }),
+      toMove: toMove,
+      enPassantSquare: board.enPassantSquare,
+      castlingRights: castlingRights()
+    )
   }
 }
 

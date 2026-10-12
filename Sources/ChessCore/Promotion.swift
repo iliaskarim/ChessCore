@@ -6,6 +6,18 @@ public enum Promotion: Move, Hashable {
   /// A capturing promotion.
   case capture(_ capture: Capture, to: Piece.Figure)
 
+  /// Figure to promote to.
+  public var figure: Piece.Figure {
+    switch self {
+    case let .translation(_, figure), let .capture(_, figure):
+      figure
+    }
+  }
+
+  public var isCapture: Bool {
+    move.isCapture
+  }
+
   /// The move being promoted.
   public var move: any Move {
     switch self {
@@ -17,24 +29,12 @@ public enum Promotion: Move, Hashable {
     }
   }
 
-  /// Figure to promote to.
-  public var figure: Piece.Figure {
-    switch self {
-    case let .translation(_, figure), let .capture(_, figure):
-      figure
-    }
-  }
-
-  public var movingFigure: Piece.Figure? {
-    move.movingFigure
-  }
-
   public var moveTargetSquare: Square? {
     move.moveTargetSquare
   }
 
-  public var isCapture: Bool {
-    move.isCapture
+  public var movingFigure: Piece.Figure? {
+    move.movingFigure
   }
 
   public func isSameMove(as move: any Move) -> Bool {

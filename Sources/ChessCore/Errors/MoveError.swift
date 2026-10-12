@@ -1,11 +1,5 @@
 /// Errors related to move validation.
 public enum MoveError: Error, Equatable {
-  /// More than one legal move matches the requested move.
-  case ambiguousMove(candidates: [any Move])
-
-  /// No legal move matches the requested move.
-  case illegalMove
-
   public static func == (lhs: Self, rhs: Self) -> Bool {
     switch (lhs, rhs) {
     case let (.ambiguousMove(lhsCandidates), .ambiguousMove(rhsCandidates)):
@@ -18,4 +12,10 @@ public enum MoveError: Error, Equatable {
       false
     }
   }
+
+  /// More than one legal move matches the requested move.
+  case ambiguousMove(candidates: [any Move])
+
+  /// No legal move matches the requested move.
+  case illegalMove
 }

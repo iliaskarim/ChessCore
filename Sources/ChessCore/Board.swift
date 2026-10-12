@@ -73,41 +73,6 @@ private extension Move {
   }
 }
 
-private func ~= (lhs: any Move, rhs: any Move) -> Bool {
-  switch (lhs, rhs) {
-  case let (lhsCastle as Castle, rhsCastle as Castle):
-    lhsCastle == rhsCastle
-
-  case let (lhsPromotion as Promotion, rhsPromotion as Promotion):
-    lhsPromotion.figure == rhsPromotion.figure
-      && lhsPromotion.move ~= rhsPromotion.move
-
-  case let (lhsTranslation as Translation, rhsTranslation as Translation):
-    lhsTranslation ~= rhsTranslation
-
-  case let (lhsCapture as Capture, rhsCapture as Capture):
-    lhsCapture.translation ~= rhsCapture.translation
-
-  default:
-    false
-  }
-}
-
-private extension Translation {
-  static func ~= (lhs: Self, rhs: Self) -> Bool {
-    if let lhsFile = lhs.disambiguationFile, let rhsFile = rhs.disambiguationFile, lhsFile != rhsFile {
-      return false
-    }
-
-    if let lhsRank = lhs.disambiguationRank, let rhsRank = rhs.disambiguationRank, lhsRank != rhsRank {
-      return false
-    }
-
-    return lhs.figure == rhs.figure
-      && lhs.targetSquare == rhs.targetSquare
-  }
-}
-
 private extension Piece {
   var startFiles: [Square.File] {
     switch figure {
@@ -201,6 +166,26 @@ private extension Piece.Color {
   }
 }
 
+private func ~= (lhs: any Move, rhs: any Move) -> Bool {
+  switch (lhs, rhs) {
+  case let (lhsCastle as Castle, rhsCastle as Castle):
+    lhsCastle == rhsCastle
+
+  case let (lhsPromotion as Promotion, rhsPromotion as Promotion):
+    lhsPromotion.figure == rhsPromotion.figure
+      && lhsPromotion.move ~= rhsPromotion.move
+
+  case let (lhsTranslation as Translation, rhsTranslation as Translation):
+    lhsTranslation ~= rhsTranslation
+
+  case let (lhsCapture as Capture, rhsCapture as Capture):
+    lhsCapture.translation ~= rhsCapture.translation
+
+  default:
+    false
+  }
+}
+
 private extension Square {
   static func + (lhs: Self, rhs: Board.Vector) -> Self? {
     guard let file = File(rawValue: lhs.file.rawValue + rhs.files),
@@ -227,6 +212,21 @@ private extension Square {
     (self + vector).map { square in
       [square] + square.linearPath(for: vector)
     } ?? []
+  }
+}
+
+private extension Translation {
+  static func ~= (lhs: Self, rhs: Self) -> Bool {
+    if let lhsFile = lhs.disambiguationFile, let rhsFile = rhs.disambiguationFile, lhsFile != rhsFile {
+      return false
+    }
+
+    if let lhsRank = lhs.disambiguationRank, let rhsRank = rhs.disambiguationRank, lhsRank != rhsRank {
+      return false
+    }
+
+    return lhs.figure == rhs.figure
+      && lhs.targetSquare == rhs.targetSquare
   }
 }
 
@@ -259,8 +259,8 @@ public struct Board {
 
   /// Standard chess starting position.
   ///
-  /// White pieces start on ranks 1 and 2, and black pieces start on ranks 7
-  /// and 8.
+  /// White pieces start on ranks 1 and 2, and black pieces start on ranks 7 and
+  /// 8.
   public static var board: Board {
     .init(pieces: .init(uniqueKeysWithValues: Piece.Color.allCases.flatMap { color in
       Piece.Figure.allCases.map { figure in
@@ -275,6 +275,15 @@ public struct Board {
         ), piece)
       }
     }))
+  }
+
+  /// Retrieves the piece located at a specific square on the board.
+  ///
+  /// - Parameters:
+  ///   - square: The square on the board whose piece to retrieve.
+  /// - Returns: The piece at the given square, or `nil` if the square is empty.
+  public subscript(square: Square) -> Piece? {
+    pieces[square]
   }
 
   /// Board status.
@@ -320,15 +329,6 @@ public struct Board {
 
   private var toMove: Piece.Color {
     dataSource?.toMove ?? .white
-  }
-
-  /// Retrieves the piece located at a specific square on the board.
-  ///
-  /// - Parameters:
-  ///   - square: The square on the board whose piece to retrieve.
-  /// - Returns: The piece at the given square, or `nil` if the square is empty.
-  public subscript(square: Square) -> Piece? {
-    pieces[square]
   }
 
   /// Retrieves the moves that can be made from a specific square on the board.
@@ -477,16 +477,16 @@ public struct Board {
 extension Board: Collection {
   public typealias Index = [Square: Piece].Index
 
+  public subscript(position: Index) -> (key: Square, value: Piece) {
+    pieces[position]
+  }
+
   public var endIndex: Index {
     pieces.endIndex
   }
 
   public var startIndex: Index {
     pieces.startIndex
-  }
-
-  public subscript(position: Index) -> (key: Square, value: Piece) {
-    pieces[position]
   }
 
   public func index(after i: Index) -> Index {

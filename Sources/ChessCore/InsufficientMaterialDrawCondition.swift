@@ -1,3 +1,9 @@
+private extension Square {
+  var colorComplex: Int {
+    (file.rawValue + rank.rawValue) % 2
+  }
+}
+
 /// Draw by insufficient mating material.
 public struct InsufficientMaterialDrawCondition: DrawCondition {
   public static var name: String {
@@ -30,11 +36,5 @@ public struct InsufficientMaterialDrawCondition: DrawCondition {
     return Set(nonKingPieces.map { square, _ in
       square.colorComplex
     }).count == 1
-  }
-}
-
-private extension Square {
-  var colorComplex: Int {
-    (file.rawValue + rank.rawValue) % 2
   }
 }

@@ -8,16 +8,16 @@ public enum Castle: Move, CaseIterable, Hashable {
   /// Queenside castling.
   case long
 
-  public var movingFigure: Piece.Figure? {
-    .king
+  public var isCapture: Bool {
+    false
   }
 
   public var moveTargetSquare: Square? {
     nil
   }
 
-  public var isCapture: Bool {
-    false
+  public var movingFigure: Piece.Figure? {
+    .king
   }
 
   public func isSameMove(as move: any Move) -> Bool {
