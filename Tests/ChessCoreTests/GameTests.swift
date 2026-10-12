@@ -1,6 +1,16 @@
 import Testing
 @testable import ChessCore
 
+private extension Piece {
+  static let blackKing = Self(color: .black, figure: .king)
+  static let blackPawn = Self(color: .black, figure: .pawn)
+  static let blackRook = Self(color: .black, figure: .rook)
+  static let whiteKing = Self(color: .white, figure: .king)
+  static let whiteKnight = Self(color: .white, figure: .knight)
+  static let whitePawn = Self(color: .white, figure: .pawn)
+  static let whiteRook = Self(color: .white, figure: .rook)
+}
+
 private extension Square {
   static let a1 = Self(file: .a, rank: .one)
   static let c1 = Self(file: .c, rank: .one)
@@ -21,16 +31,6 @@ private extension Square {
   static let g8 = Self(file: .g, rank: .eight)
   static let h1 = Self(file: .h, rank: .one)
   static let h8 = Self(file: .h, rank: .eight)
-}
-
-private extension Piece {
-  static let blackKing = Self(color: .black, figure: .king)
-  static let blackPawn = Self(color: .black, figure: .pawn)
-  static let blackRook = Self(color: .black, figure: .rook)
-  static let whiteKing = Self(color: .white, figure: .king)
-  static let whiteKnight = Self(color: .white, figure: .knight)
-  static let whitePawn = Self(color: .white, figure: .pawn)
-  static let whiteRook = Self(color: .white, figure: .rook)
 }
 
 enum GameTests {
