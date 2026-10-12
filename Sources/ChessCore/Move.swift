@@ -9,12 +9,12 @@ public enum Move: Hashable, Sendable {
   /// A castling move.
   ///
   /// Castling is either kingside or queenside.
-  public enum Castling: CaseIterable, Sendable {
-    /// Kingside (O-O) castling.
-    case kingside
+  public enum Castling: String, CaseIterable, Sendable {
+    /// Kingside castling.
+    case kingside = "O-O"
 
-    /// Queenside (O-O-O) castling.
-    case queenside
+    /// Queenside castling.
+    case queenside = "O-O-O"
   }
 
   /// A non-castling move.
@@ -98,20 +98,14 @@ extension Move: CustomStringConvertible {
 
 extension Move.Castling: CustomStringConvertible {
   public var description: String {
-    switch self {
-    case .kingside:
-      .castlingKingsideNotation
-
-    case .queenside:
-      .castlingQueensideNotation
-    }
+    rawValue
   }
 }
 
 extension Move.Translation: CustomStringConvertible {
   public var description: String {
     figure.rawValue.appending(disambiguationDescription)
-      .appending(isCapture ? .captureNotation : "")
+      .appending(isCapture ? Notation.Marker.capture.rawValue : "")
       .appending(targetSquare.description)
       .appending(promotionDescription)
   }
@@ -121,6 +115,6 @@ extension Move.Translation: CustomStringConvertible {
   }
 
   private var promotionDescription: String {
-    promotion.map(\.rawValue).map(String.promotionNotation.appending) ?? ""
+    promotion.map(\.rawValue).map(Notation.Marker.promotion.rawValue.appending) ?? ""
   }
 }
