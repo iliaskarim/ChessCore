@@ -61,18 +61,19 @@ private extension Translation {
   }
 }
 
-struct BoardTests {
+enum BoardTests {
   @Suite("Castling")
   struct CastlingMoves {
     @Test
     func blackMoves() {
-      var board: Board = [
-        .e8: .blackKing,
-        .a8: .blackRook,
-        .h8: .blackRook
-      ]
-      let dataSource = MockBoardDataSource(toMove: .black)
-      board.dataSource = dataSource
+      let board = Board(
+        pieces: [
+          .e8: .blackKing,
+          .a8: .blackRook,
+          .h8: .blackRook
+        ],
+        toMove: .black
+      )
 
       let kingsideCastle = Castling.kingside
       let queensideCastle = Castling.queenside
@@ -187,11 +188,12 @@ struct BoardTests {
     func moves(for color: Piece.Color, on file: Square.File) {
       let square = Square(file: file, rank: color == .white ? .seven : .two)
       let targetSquare = Square(file: file, rank: color == .white ? .eight : .one)
-      var board: Board = [
-        square: Piece(color: color, figure: .pawn)
-      ]
-      let dataSource = MockBoardDataSource(toMove: color)
-      board.dataSource = dataSource
+      let board = Board(
+        pieces: [
+          square: Piece(color: color, figure: .pawn)
+        ],
+        toMove: color
+      )
 
       #expect(Set(board.moves(from: square)[targetSquare] ?? []) == Set(
         [Piece.Figure.queen, .rook, .bishop, .knight].map { promotion in
@@ -204,29 +206,5 @@ struct BoardTests {
         }
       ))
     }
-  }
-
-  private class MockBoardDataSource: BoardDataSource {
-    let toMove: Piece.Color
-
-    func hasPieceMoved(_ _: Piece, from _: Square) -> Bool {
-      false
-    }
-
-    init(toMove: Piece.Color = .white) {
-      self.toMove = toMove
-    }
-  }
-
-  @Test
-  func dataSourceIsWeaklyHeld() {
-    var board = Board.board
-    var dataSource: BoardDataSource? = MockBoardDataSource()
-
-    board.dataSource = dataSource
-    #expect(board.dataSource != nil)
-
-    dataSource = nil
-    #expect(board.dataSource == nil)
   }
 }

@@ -5,6 +5,7 @@ private extension Piece {
   static let blackBishop = Self(color: .black, figure: .bishop)
   static let blackKing = Self(color: .black, figure: .king)
   static let blackKnight = Self(color: .black, figure: .knight)
+  static let blackPawn = Self(color: .black, figure: .pawn)
   static let whiteBishop = Self(color: .white, figure: .bishop)
   static let whiteKing = Self(color: .white, figure: .king)
   static let whiteKnight = Self(color: .white, figure: .knight)
@@ -12,11 +13,17 @@ private extension Piece {
 }
 
 private extension Square {
+  static let a2 = Self(file: .a, rank: .two)
   static let a3 = Self(file: .a, rank: .three)
+  static let a4 = Self(file: .a, rank: .four)
   static let b1 = Self(file: .b, rank: .one)
+  static let b4 = Self(file: .b, rank: .four)
   static let c1 = Self(file: .c, rank: .one)
+  static let c2 = Self(file: .c, rank: .two)
+  static let c3 = Self(file: .c, rank: .three)
   static let c4 = Self(file: .c, rank: .four)
   static let c6 = Self(file: .c, rank: .six)
+  static let d4 = Self(file: .d, rank: .four)
   static let e1 = Self(file: .e, rank: .one)
   static let e4 = Self(file: .e, rank: .four)
   static let e5 = Self(file: .e, rank: .five)
@@ -28,7 +35,10 @@ private extension Square {
   static let f6 = Self(file: .f, rank: .six)
   static let f7 = Self(file: .f, rank: .seven)
   static let g1 = Self(file: .g, rank: .one)
+  static let g4 = Self(file: .g, rank: .four)
   static let g8 = Self(file: .g, rank: .eight)
+  static let h2 = Self(file: .h, rank: .two)
+  static let h4 = Self(file: .h, rank: .four)
   static let h5 = Self(file: .h, rank: .five)
   static let h6 = Self(file: .h, rank: .six)
 }
@@ -104,6 +114,57 @@ struct GameEndTests {
       ])
 
       #expect(game.status == .toMove(.white))
+    }
+  }
+
+  @Suite("Threefold Repetition En Passant")
+  struct ThreefoldRepetitionEnPassant {
+    @Test(arguments: [
+      DoubleStep(start: .c2, target: .c4, capturer: .d4),
+      DoubleStep(start: .a2, target: .a4, capturer: .b4),
+      DoubleStep(start: .h2, target: .h4, capturer: .g4)
+    ])
+    func captureRightPreventsRepetition(_ push: DoubleStep) throws {
+      let game = try gameRepeated(after: push)
+
+      #expect(game.status == .toMove(.black))
+    }
+
+    @Test(arguments: [
+      DoubleStep(start: .c2, target: .c4, capturer: nil),
+      DoubleStep(start: .a2, target: .a4, capturer: nil),
+      DoubleStep(start: .h2, target: .h4, capturer: nil)
+    ])
+    func doubleStepWithNoCapturerCountsAsRepetition(_ push: DoubleStep) throws {
+      let game = try gameRepeated(after: push)
+
+      #expect(game.status == .draw(ThreefoldRepetitionDrawCondition.self))
+      #expect(game.status.description == "Draw by threefold repetition.")
+    }
+
+    private func gameRepeated(after push: DoubleStep) throws -> Game {
+      var pieces = [
+        Square.e1: Piece.whiteKing,
+        Square.b1: Piece.whiteKnight,
+        push.start: Piece.whitePawn,
+        Square.e8: Piece.blackKing,
+        Square.g8: Piece.blackKnight
+      ]
+      if let capturer = push.capturer {
+        pieces[capturer] = .blackPawn
+      }
+
+      let game = Game(board: .init(pieces: pieces))
+      try game.play(Translation(figure: .pawn, targetSquare: push.target))
+
+      let nf6 = Translation(figure: .knight, targetSquare: .f6)
+      let nc3 = Translation(figure: .knight, targetSquare: .c3)
+      let ng8 = Translation(figure: .knight, targetSquare: .g8)
+      let nb1 = Translation(figure: .knight, targetSquare: .b1)
+      for move in [nf6, nc3, ng8, nb1, nf6, nc3, ng8, nb1] {
+        try game.play(move)
+      }
+      return game
     }
   }
 
@@ -208,4 +269,19 @@ struct GameEndTests {
     #expect(game.status == .draw(ThreefoldRepetitionDrawCondition.self))
     #expect(game.status.description == "Draw by threefold repetition.")
   }
+}
+
+/// A white pawn double-step, plus the black pawn that can capture it, if any.
+struct DoubleStep: Sendable, CustomStringConvertible {
+  var description: String {
+    capturer.map { capturer in
+      "\(start)\(target) from \(capturer)"
+    } ?? "\(start)\(target)"
+  }
+
+  let start: Square
+
+  let target: Square
+
+  let capturer: Square?
 }
