@@ -128,42 +128,42 @@ private extension Piece {
     }
   }
 
-  func paths(from square: Square, isCapture: Bool) -> [[Square]] {
-    switch (figure, isCapture, square.rank) {
-    case (.king, _, _):
-      square.singleStepPaths(for: .cardinalUnitVectors + .diagonalUnitVectors)
-
-    case (.queen, _, _):
-      square.linearPaths(for: .cardinalUnitVectors + .diagonalUnitVectors)
-
-    case (.rook, _, _):
-      square.linearPaths(for: .cardinalUnitVectors)
-
-    case (.bishop, _, _):
-      square.linearPaths(for: .diagonalUnitVectors)
-
-    case (.knight, _, _):
-      square.singleStepPaths(for: [-2, -1, 1, 2].flatMap { files in
-        [-2, -1, 1, 2].filter { ranks in
-          abs(files) != abs(ranks)
-        }
-        .map { ranks in
-          .init(files: files, ranks: ranks)
-        }
+  func capturePaths(from square: Square) -> [[Square]] {
+    switch figure {
+    case .pawn:
+      square.singleStepPaths(for: [-1, 1].map { files in
+        .init(files: files, ranks: color.forwardUnitVector.ranks)
       })
 
-    case (.pawn, false, color.pawnRank):
+    default:
+      nonCapturePaths(from: square)
+    }
+  }
+
+  func nonCapturePaths(from square: Square) -> [[Square]] {
+    switch (figure, square.rank) {
+    case (.king, _):
+      square.singleStepPaths(for: .cardinalUnitVectors + .diagonalUnitVectors)
+
+    case (.queen, _):
+      square.linearPaths(for: .cardinalUnitVectors + .diagonalUnitVectors)
+
+    case (.rook, _):
+      square.linearPaths(for: .cardinalUnitVectors)
+
+    case (.bishop, _):
+      square.linearPaths(for: .diagonalUnitVectors)
+
+    case (.knight, _):
+      square.singleStepPaths(for: .knightVectors)
+
+    case (.pawn, color.pawnRank):
       [[color.pawnSinglePushTargetRank, color.pawnDoublePushTargetRank].map { rank in
         .init(file: square.file, rank: rank)
       }]
 
-    case (.pawn, false, _):
+    case (.pawn, _):
       square.singleStepPaths(for: [color.forwardUnitVector])
-
-    case (.pawn, true, _):
-      square.singleStepPaths(for: [-1, 1].map { files in
-        .init(files: files, ranks: color.forwardUnitVector.ranks)
-      })
     }
   }
 
@@ -283,8 +283,11 @@ public struct Board {
 
   private var isInCheck: Bool {
     pieces.contains { square, piece in
-      translations(for: piece, from: square, isCapture: true).contains { translation in
-        pieces[translation.targetSquare] == .init(color: toMove, figure: .king)
+      piece.capturePaths(from: square).compactMap { path in
+        captureSquare(for: piece, on: path)
+      }
+      .contains { targetSquare in
+        pieces[targetSquare] == .init(color: toMove, figure: .king)
       }
     }
   }
@@ -359,6 +362,12 @@ public struct Board {
     self.enPassantSquare = enPassantSquare
   }
 
+  private func captureSquare(for piece: Piece, on path: [Square]) -> Square? {
+    path.first { square in
+      pieces[square]?.color == piece.color.opposite
+    }
+  }
+
   private func hasPieceMoved(_ piece: Piece, from square: Square) -> Bool {
     dataSource?.hasPieceMoved(piece, from: square) ?? false
   }
@@ -378,7 +387,40 @@ public struct Board {
       return []
     }
 
-    let moves = translations(for: piece, from: square, isCapture: isCapture).map(Move.translation)
+    let targetSquares = if isCapture {
+      piece.capturePaths(from: square).flatMap { path in
+        if let enPassantSquare,
+           let first = path.first,
+           piece.figure == .pawn,
+           first == enPassantSquare + piece.color.forwardUnitVector {
+          [first]
+        } else {
+          captureSquare(for: piece, on: path).map { square in
+            [square]
+          } ?? []
+        }
+      }
+    } else {
+      piece.nonCapturePaths(from: square).flatMap { path in
+        path.prefix { square in
+          pieces[square] == nil
+        }
+      }
+    }
+
+    let moves = targetSquares.flatMap { targetSquare in
+      piece.promotions(for: targetSquare).map { promotion in
+        Move.Translation(
+          figure: piece.figure,
+          targetSquare: targetSquare,
+          isCapture: isCapture,
+          promotion: promotion,
+          disambiguationFile: square.file,
+          disambiguationRank: square.rank
+        )
+      }
+    }
+    .map(Move.translation)
 
     guard piece == .init(color: toMove, figure: .king),
           square == .init(file: .e, rank: toMove.backRank),
@@ -396,43 +438,6 @@ public struct Board {
         && !hasPieceMoved(rook, from: rookSquare)
     }
     .map(Move.castling)
-  }
-
-  private func translations(for piece: Piece, from square: Square, isCapture: Bool) -> [Move.Translation] {
-    piece.paths(from: square, isCapture: isCapture).flatMap { path in
-      let obstruction = path.enumerated().first { _, square in
-        pieces.keys.contains(square)
-      }
-
-      guard isCapture else {
-        return path.prefix(upTo: obstruction?.0 ?? path.endIndex)
-      }
-
-      guard let enPassantSquare,
-            let first = path.first,
-            piece.figure == .pawn,
-            first == enPassantSquare + piece.color.forwardUnitVector else {
-        guard let obstruction, pieces[obstruction.1]!.color != piece.color else {
-          return []
-        }
-
-        return path[obstruction.0 ..< obstruction.0 + 1]
-      }
-
-      return [first]
-    }
-    .flatMap { targetSquare in
-      piece.promotions(for: targetSquare).map { promotion in
-        .init(
-          figure: piece.figure,
-          targetSquare: targetSquare,
-          isCapture: isCapture,
-          promotion: promotion,
-          disambiguationFile: square.file,
-          disambiguationRank: square.rank
-        )
-      }
-    }
   }
 }
 
@@ -502,6 +507,15 @@ private extension [Board.Vector] {
 
   static let diagonalUnitVectors: Self = [-1, 1].flatMap { files in
     [-1, 1].map { ranks in
+      .init(files: files, ranks: ranks)
+    }
+  }
+
+  static let knightVectors: Self = [-2, -1, 1, 2].flatMap { files in
+    [-2, -1, 1, 2].filter { ranks in
+      abs(files) != abs(ranks)
+    }
+    .map { ranks in
       .init(files: files, ranks: ranks)
     }
   }
