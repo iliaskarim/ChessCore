@@ -1,18 +1,47 @@
+# Warnings are errors for every invocation that reads this file,
+# including `swiftlint lint` and `swiftlint analyze` with no
+# `--strict` flag.
+strict: true
+
 disabled_rules:
-  - comment_spacing
   - cyclomatic_complexity
   - force_cast
   - force_try
   - function_body_length
+  - function_parameter_count
   - identifier_name
   - file_length
+  - large_tuple
   - leading_whitespace
   - static_over_final_class
+  - type_body_length
   - type_name
-  - unused_enumerated
+
+opt_in_rules:
+  - attributes
+  # Same as SwiftFormat blankLineAfterSwitchCase always. One-liners may
+  # stay packed here; SF still inserts the blank.
+  - vertical_whitespace_between_cases
+  # Same as SwiftFormat wrapCaseBodies (no autocorrect).
+  - switch_case_on_newline
+  # Parameters with defaults after required ones (no autocorrect).
+  - function_default_parameter_at_end
+
+# Analyzer rules need `swiftlint analyze` plus an xcodebuild log (macOS).
+# `swiftlint lint` does not run them.
+# Run `bash scripts/swiftlint-analyze` (`clean build-for-testing`).
+analyzer_rules:
+  - unused_declaration
+  - unused_import
+
+unused_declaration:
+  severity: error
+  include_public_and_open: true
 
 line_length:
   warning: 110
+  excluded_lines_patterns:
+    - '^\s*///.*https?://'
 
 nesting:
   function_level: 1
@@ -21,6 +50,9 @@ nesting:
 trailing_whitespace:
   severity: error
 
+non_optional_string_data_conversion:
+  severity: error
+  include_variables: true
+
 excluded:
   - .build
-  - Package.swift
