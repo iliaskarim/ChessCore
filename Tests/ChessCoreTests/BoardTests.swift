@@ -66,30 +66,6 @@ private extension Square {
 }
 
 struct BoardTests {
-  private class MockBoardDataSource: BoardDataSource {
-    let toMove: Piece.Color
-
-    func hasPieceMoved(_ _: Piece, from _: Square) -> Bool {
-      false
-    }
-
-    init(toMove: Piece.Color = .white) {
-      self.toMove = toMove
-    }
-  }
-
-  @Test
-  func dataSourceIsWeaklyHeld() {
-    var board = Board.board
-    var dataSource: BoardDataSource? = MockBoardDataSource()
-
-    board.dataSource = dataSource
-    #expect(board.dataSource != nil)
-
-    dataSource = nil
-    #expect(board.dataSource == nil)
-  }
-
   @Suite("Castling")
   struct Castling {
     @Test
@@ -227,5 +203,29 @@ struct BoardTests {
         }
       ))
     }
+  }
+
+  private class MockBoardDataSource: BoardDataSource {
+    let toMove: Piece.Color
+
+    func hasPieceMoved(_ _: Piece, from _: Square) -> Bool {
+      false
+    }
+
+    init(toMove: Piece.Color = .white) {
+      self.toMove = toMove
+    }
+  }
+
+  @Test
+  func dataSourceIsWeaklyHeld() {
+    var board = Board.board
+    var dataSource: BoardDataSource? = MockBoardDataSource()
+
+    board.dataSource = dataSource
+    #expect(board.dataSource != nil)
+
+    dataSource = nil
+    #expect(board.dataSource == nil)
   }
 }

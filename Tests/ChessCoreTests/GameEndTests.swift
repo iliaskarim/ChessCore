@@ -35,6 +35,78 @@ private extension Square {
 
 @Suite("Game End")
 struct GameEndTests {
+  @Suite("Insufficient Material")
+  struct InsufficientMaterial {
+    @Test
+    func bareKings() {
+      let game = Game(board: [
+        .e1: .whiteKing,
+        .e8: .blackKing
+      ])
+
+      #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
+      #expect(game.status.description == "Draw by insufficient material.")
+    }
+
+    @Test
+    func kingAndBishopAgainstKing() {
+      let game = Game(board: [
+        .e1: .whiteKing,
+        .c1: .whiteBishop,
+        .e8: .blackKing
+      ])
+
+      #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
+    }
+
+    @Test
+    func kingAndKnightAgainstKing() {
+      let game = Game(board: [
+        .e1: .whiteKing,
+        .b1: .whiteKnight,
+        .e8: .blackKing
+      ])
+
+      #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
+    }
+
+    @Test
+    func oppositeColorBishops() {
+      let game = Game(board: [
+        .e1: .whiteKing,
+        .c1: .whiteBishop,
+        .e8: .blackKing,
+        .f5: .blackBishop
+      ])
+
+      #expect(game.status == .toMove(.white))
+    }
+
+    @Test
+    func sameColorBishops() {
+      let game = Game(board: [
+        .e1: .whiteKing,
+        .c1: .whiteBishop,
+        .e8: .blackKing,
+        .f4: .blackBishop
+      ])
+
+      #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
+    }
+
+    @Test
+    func twoKnightsAgainstKing() {
+      let game = Game(board: [
+        .e1: .whiteKing,
+        .b1: .whiteKnight,
+        .g1: .whiteKnight,
+        .e8: .blackKing
+      ])
+
+      #expect(game.status == .toMove(.white))
+    }
+  }
+
   @Test
   func drawByAgreement() throws {
     let game = Game()
@@ -62,63 +134,6 @@ struct GameEndTests {
       turns: turns,
       positionIdentities: []
     ))
-  }
-
-  @Test
-  func insufficientMaterialWithBareKings() {
-    let game = Game(board: [
-      .e1: .whiteKing,
-      .e8: .blackKing
-    ])
-
-    #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
-    #expect(game.status.description == "Draw by insufficient material.")
-  }
-
-  @Test
-  func insufficientMaterialWithKingAndBishopAgainstKing() {
-    let game = Game(board: [
-      .e1: .whiteKing,
-      .c1: .whiteBishop,
-      .e8: .blackKing
-    ])
-
-    #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
-  }
-
-  @Test
-  func insufficientMaterialWithKingAndKnightAgainstKing() {
-    let game = Game(board: [
-      .e1: .whiteKing,
-      .b1: .whiteKnight,
-      .e8: .blackKing
-    ])
-
-    #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
-  }
-
-  @Test
-  func insufficientMaterialWithSameColorBishops() {
-    let game = Game(board: [
-      .e1: .whiteKing,
-      .c1: .whiteBishop,
-      .e8: .blackKing,
-      .f4: .blackBishop
-    ])
-
-    #expect(game.status == .draw(InsufficientMaterialDrawCondition.self))
-  }
-
-  @Test
-  func oppositeColorBishopsAreNotInsufficientMaterial() {
-    let game = Game(board: [
-      .e1: .whiteKing,
-      .c1: .whiteBishop,
-      .e8: .blackKing,
-      .f5: .blackBishop
-    ])
-
-    #expect(game.status == .toMove(.white))
   }
 
   @Test
@@ -192,17 +207,5 @@ struct GameEndTests {
 
     #expect(game.status == .draw(ThreefoldRepetitionDrawCondition.self))
     #expect(game.status.description == "Draw by threefold repetition.")
-  }
-
-  @Test
-  func twoKnightsAgainstKingIsNotInsufficientMaterial() {
-    let game = Game(board: [
-      .e1: .whiteKing,
-      .b1: .whiteKnight,
-      .g1: .whiteKnight,
-      .e8: .blackKing
-    ])
-
-    #expect(game.status == .toMove(.white))
   }
 }
