@@ -176,6 +176,7 @@ enum GameTests {
         #expect(game.board[.f1] == .whiteRook)
         #expect(game.board[.e1] == nil)
         #expect(game.board[.h1] == nil)
+
       case .queenside:
         #expect(game.board[.c1] == .whiteKing)
         #expect(game.board[.d1] == .whiteRook)
