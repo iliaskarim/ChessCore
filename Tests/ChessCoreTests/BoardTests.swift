@@ -27,13 +27,9 @@ private extension Move {
 }
 
 private extension Piece {
-  static let blackBishop = Self(color: .black, figure: .bishop)
   static let blackKing = Self(color: .black, figure: .king)
-  static let blackKnight = Self(color: .black, figure: .knight)
   static let blackRook = Self(color: .black, figure: .rook)
-  static let whiteBishop = Self(color: .white, figure: .bishop)
   static let whiteKing = Self(color: .white, figure: .king)
-  static let whiteKnight = Self(color: .white, figure: .knight)
   static let whiteRook = Self(color: .white, figure: .rook)
 }
 

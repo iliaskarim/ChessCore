@@ -1,9 +1,23 @@
 --swiftversion 6.0
 --disable blankLinesAroundMark
 --disable preferForLoop
+# Keep @Test method names with a test… prefix (project convention).
+--disable swiftTestingTestCaseNames
+# Keep argument-less @Suite on test types (project convention).
+--disable redundantSwiftTestingSuite
 --disable wrapMultilineStatementBraces
+# Blank line after every switch case, including one-liners (off by default).
+--enable blankLineAfterSwitchCase
+--blank-line-after-switch-case always
+# case .foo: return bar → body on the next line (off by default).
+--enable wrapCaseBodies
+--binarygrouping none
 --commas inline
+--decimalgrouping none
+# Prefer plain numeric literals (no digit _ grouping).
+--hexgrouping none
 --ifdef outdent
---importgrouping testable-last
+# Alpha within groups; @testable last.
+--importgrouping testable-last,alpha
 --indent 2
---propertytypes explicit
+--octalgrouping none
