@@ -1,0 +1,54 @@
+name: Lint
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: SwiftLint and SwiftFormat
+    runs-on: ubuntu-latest
+    env:
+      SWIFTLINT_VERSION: "0.62.2"
+      SWIFTFORMAT_VERSION: "0.63.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install SwiftFormat
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.local/bin"
+          curl -fsSL "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat_linux.zip" \
+            -o "${RUNNER_TEMP}/swiftformat.zip"
+          unzip -o -q "${RUNNER_TEMP}/swiftformat.zip" -d "${RUNNER_TEMP}/swiftformat"
+          install "${RUNNER_TEMP}/swiftformat/swiftformat_linux" "${HOME}/.local/bin/swiftformat"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          "${HOME}/.local/bin/swiftformat" --version
+
+      - name: Install SwiftLint
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.local/bin"
+          curl -fsSL "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/swiftlint_linux_amd64.zip" \
+            -o "${RUNNER_TEMP}/swiftlint.zip"
+          unzip -o -q "${RUNNER_TEMP}/swiftlint.zip" -d "${RUNNER_TEMP}/swiftlint"
+          # Static binary does not need libsourcekitdInProc.so on the runner.
+          install "${RUNNER_TEMP}/swiftlint/swiftlint-static" "${HOME}/.local/bin/swiftlint"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          "${HOME}/.local/bin/swiftlint" version
+
+      - name: SwiftFormat
+        run: swiftformat --lint .
+
+      - name: SwiftLint
+        run: swiftlint lint --strict .
