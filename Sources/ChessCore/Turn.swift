@@ -16,13 +16,13 @@ extension Turn: CustomStringConvertible {
     case let .end(victor):
       switch victor {
       case .black:
-        .blackVictoryNotation
+        Notation.Result.blackVictory.rawValue
 
       case .white:
-        .whiteVictoryNotation
+        Notation.Result.whiteVictory.rawValue
 
       case .none:
-        .drawNotation
+        Notation.Result.draw.rawValue
       }
 
     case let .move(move, punctuation):
