@@ -8,7 +8,11 @@ private extension AnyMove {
 public struct FiftyMoveDrawCondition: GameDrawCondition {
   public static let name = String.fiftyMoveRule
 
-  static func isDraw(board _: Board, turns: [Turn]) -> Bool {
+  static func isDraw(
+    board _: Board,
+    turns: [Turn],
+    boards _: [Board]
+  ) -> Bool {
     turns.reversed().prefix { turn in
       switch turn {
       case let .move(move, _):

@@ -11,7 +11,7 @@ public struct InsufficientMaterialDrawCondition: GameDrawCondition {
   static func isDraw(
     board: Board,
     turns _: [Turn],
-    positionIdentities _: [PositionIdentity]
+    boards _: [Board]
   ) -> Bool {
     let material = board.pieces.filter { _, piece in
       piece.figure != .king

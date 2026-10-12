@@ -20,7 +20,7 @@ private extension Board.Status {
 ///
 /// A game owns the current board position and applies moves while tracking game
 /// status such as whose turn it is and whether the game has ended.
-public class Game: BoardDataSource, ObservableObject {
+public class Game: ObservableObject {
   /// A game's status.
   ///
   /// A game is either in progress, won, or drawn.
@@ -57,6 +57,7 @@ public class Game: BoardDataSource, ObservableObject {
     [
       AgreementDrawCondition.self,
       StalemateDrawCondition.self,
+      ThreefoldRepetitionDrawCondition.self,
       InsufficientMaterialDrawCondition.self,
       FiftyMoveDrawCondition.self
     ]
@@ -75,7 +76,11 @@ public class Game: BoardDataSource, ObservableObject {
       if board.status == .checkmate {
         .winner(toMove.opposite, isByResignation: false)
       } else if let condition = Self.drawConditions.first(where: { condition in
-        condition.isDraw(board: board, turns: turns)
+        condition.isDraw(
+          board: board,
+          turns: turns,
+          boards: boards
+        )
       }) {
         .draw(condition)
       } else {
@@ -85,8 +90,10 @@ public class Game: BoardDataSource, ObservableObject {
   }
 
   var toMove: Piece.Color {
-    turns.count.isMultiple(of: 2) ? .white : .black
+    board.toMove
   }
+
+  private var boards = [Board]()
 
   private var turns = [Turn]()
 
@@ -119,20 +126,10 @@ public class Game: BoardDataSource, ObservableObject {
     board = try board.applying(move: move)
     let move = AnyMove(move)
     turns += [.move(move, punctuation: nil)]
+    boards += [board]
 
     // Calculate the punctuation after adding the move to turns played.
     turns[turns.indices.last!] = .move(move, punctuation: board.status?.punctuation)
-  }
-
-  func hasPieceMoved(_ piece: Piece, from square: Square) -> Bool {
-    board[square] != piece || turns.enumerated().contains { index, turn in
-      guard case let .move(move, _) = turn else {
-        return false
-      }
-
-      let color: Piece.Color = index.isMultiple(of: 2) ? .white : .black
-      return move.targetSquare(for: color) == square
-    }
   }
 
   /// Creates a game from a board.
@@ -141,7 +138,7 @@ public class Game: BoardDataSource, ObservableObject {
   ///   - board: The game board.
   public init(board: Board = .board) {
     self.board = board
-    self.board.dataSource = self
+    boards = [board]
   }
 }
 

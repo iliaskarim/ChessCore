@@ -97,10 +97,11 @@ private extension Square {
   }
 }
 
-/// An 8x8 chessboard where each square may hold a piece.
+/// An 8x8 chessboard.
 ///
-/// A board represents a position and provides move generation plus status
-/// evaluation for checks, checkmates, and stalemates.
+/// A board is a position: piece placement, the side to move, castling rights,
+/// and the en passant target square (the square a pawn just passed over). It
+/// also generates moves and reports check, checkmate, and stalemate.
 public struct Board {
   /// A board's status.
   ///
@@ -141,6 +142,18 @@ public struct Board {
     }))
   }
 
+  private static func castlingRights(for pieces: [Square: Piece]) -> [Piece.Color: Set<Castling>] {
+    .init(uniqueKeysWithValues: Piece.Color.allCases.map { color in
+      (
+        color,
+        Set(Castling.allCases.filter { side in
+          pieces[.init(file: .e, rank: color.backRank)] == .init(color: color, figure: .king)
+            && pieces[side.rookSquare(for: color)] == .init(color: color, figure: .rook)
+        })
+      )
+    })
+  }
+
   /// Retrieves the piece located at a specific square on the board.
   ///
   /// - Parameters:
@@ -167,11 +180,31 @@ public struct Board {
     }
   }
 
-  weak var dataSource: BoardDataSource?
+  let castlingRights: [Piece.Color: Set<Castling>]
 
-  fileprivate let enPassantSquare: Square?
+  /// Square a pawn just passed over, if a pawn has just moved two ranks.
+  let enPassantSquare: Square?
 
-  fileprivate let pieces: [Square: Piece]
+  let pieces: [Square: Piece]
+
+  let toMove: Piece.Color
+
+  private var canCaptureEnPassant: Bool {
+    guard let enPassantSquare,
+          let capturerRank = Square.Rank(
+            rawValue: enPassantSquare.rank.rawValue - toMove.forwardUnitVector.ranks
+          ) else {
+      return false
+    }
+
+    return [-1, 1].contains { fileOffset in
+      Square.File(rawValue: enPassantSquare.file.rawValue + fileOffset).flatMap { file in
+        self[.init(file: file, rank: capturerRank)].map { piece in
+          piece == .init(color: toMove, figure: .pawn)
+        }
+      } ?? false
+    }
+  }
 
   private var isInCheck: Bool {
     pieces.contains { square, piece in
@@ -188,10 +221,6 @@ public struct Board {
     !pieces.contains { square, piece in
       !legalMoves(for: piece, from: square).isEmpty
     }
-  }
-
-  private var toMove: Piece.Color {
-    dataSource?.toMove ?? .white
   }
 
   /// Retrieves the moves that can be made from a specific square on the board.
@@ -237,31 +266,105 @@ public struct Board {
     return try applying(candidate.transforms(for: piece, from: square))
   }
 
-  init(pieces: [Square: Piece], enPassantSquare: Square? = nil) {
+  func castlingRights(
+    moving piece: Piece,
+    from origin: Square,
+    capturing captured: Square?
+  ) -> [Piece.Color: Set<Castling>] {
+    var rights = castlingRights
+    if piece.figure == .king {
+      rights[piece.color] = []
+    } else if piece.figure == .rook, var sides = rights[piece.color] {
+      sides.subtract(Castling.allCases.filter { side in
+        side.rookSquare(for: piece.color) == origin
+      })
+      rights[piece.color] = sides
+    }
+
+    if let captured {
+      for color in Piece.Color.allCases {
+        guard var sides = rights[color] else {
+          continue
+        }
+
+        sides.subtract(Castling.allCases.filter { side in
+          side.rookSquare(for: color) == captured
+        })
+        rights[color] = sides
+      }
+    }
+
+    return rights
+  }
+
+  func hasCastlingRight(_ castling: Castling, for color: Piece.Color) -> Bool {
+    let kingSquare = Square(file: .e, rank: color.backRank)
+    let rookSquare = castling.rookSquare(for: color)
+    return castlingRights[color, default: []].contains(castling)
+      && pieces[kingSquare] == .init(color: color, figure: .king)
+      && pieces[rookSquare] == .init(color: color, figure: .rook)
+  }
+
+  func repeats(_ other: Board) -> Bool {
+    pieces == other.pieces
+      && toMove == other.toMove
+      && castlingRights == other.castlingRights
+      && (
+        enPassantSquare == other.enPassantSquare
+          || !canCaptureEnPassant && !other.canCaptureEnPassant
+      )
+  }
+
+  func with(
+    pieces: [Square: Piece],
+    enPassantSquare: Square?,
+    castlingRights: [Piece.Color: Set<Castling>]
+  ) -> Board {
+    .init(
+      pieces: pieces,
+      enPassantSquare: enPassantSquare,
+      toMove: toMove,
+      castlingRights: castlingRights
+    )
+  }
+
+  func with(toMove: Piece.Color) -> Board {
+    .init(
+      pieces: pieces,
+      enPassantSquare: enPassantSquare,
+      toMove: toMove,
+      castlingRights: castlingRights
+    )
+  }
+
+  init(
+    pieces: [Square: Piece],
+    enPassantSquare: Square? = nil,
+    toMove: Piece.Color = .white,
+    castlingRights: [Piece.Color: Set<Castling>]? = nil
+  ) {
     self.pieces = pieces
     self.enPassantSquare = enPassantSquare
+    self.toMove = toMove
+    self.castlingRights = castlingRights ?? Self.castlingRights(for: pieces)
   }
 
   private func applying(_ transforms: [Transform]) throws -> Self {
     try transforms.reduce(self) { board, transform in
-      var transformedBoard = transform(board)
-      transformedBoard.dataSource = dataSource
+      let transformedBoard = transform(board)
       guard !transformedBoard.isInCheck else {
         throw MoveError.illegalMoveIntoCheck
       }
 
       return transformedBoard
     }
+    .with(toMove: toMove.opposite)
   }
 
   private func captureSquare(for piece: Piece, on path: [Square]) -> Square? {
     path.first { square in
       pieces[square]?.color == piece.color.opposite
     }
-  }
-
-  private func hasPieceMoved(_ piece: Piece, from square: Square) -> Bool {
-    dataSource?.hasPieceMoved(piece, from: square) ?? false
   }
 
   private func legalMoves(for piece: Piece, from square: Square) -> [AnyMove] {
@@ -284,7 +387,7 @@ public struct Board {
         if let enPassantSquare,
            let first = path.first,
            piece.figure == .pawn,
-           first == enPassantSquare + piece.color.forwardUnitVector {
+           first == enPassantSquare {
           [first]
         } else {
           captureSquare(for: piece, on: path).map { square in
@@ -314,19 +417,14 @@ public struct Board {
     }
 
     guard piece == .init(color: toMove, figure: .king),
-          square == .init(file: .e, rank: toMove.backRank),
-          !hasPieceMoved(piece, from: square),
           !isCapture,
           !isInCheck else {
       return moves
     }
 
     let castlingMoves = Castling.allCases.filter { castling in
-      let rookSquare = castling.rookSquare(for: toMove)
-      let rook = Piece(color: toMove, figure: .rook)
-      return pieces[rookSquare] == rook
+      hasCastlingRight(castling, for: toMove)
         && !castling.requiredEmptySquares(for: toMove).contains(where: pieces.keys.contains)
-        && !hasPieceMoved(rook, from: rookSquare)
     }
     .map(AnyMove.init)
     return moves + castlingMoves

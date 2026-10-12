@@ -2,7 +2,11 @@
 public struct AgreementDrawCondition: GameDrawCondition {
   public static let name = String.agreement
 
-  static func isDraw(board _: Board, turns: [Turn]) -> Bool {
+  static func isDraw(
+    board _: Board,
+    turns: [Turn],
+    boards _: [Board]
+  ) -> Bool {
     turns.last == .end(victor: nil)
   }
 }

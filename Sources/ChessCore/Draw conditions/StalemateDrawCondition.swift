@@ -2,7 +2,11 @@
 public struct StalemateDrawCondition: GameDrawCondition {
   public static let name = String.stalemate.lowercased()
 
-  static func isDraw(board: Board, turns _: [Turn]) -> Bool {
+  static func isDraw(
+    board: Board,
+    turns _: [Turn],
+    boards _: [Board]
+  ) -> Bool {
     board.status == .stalemate
   }
 }

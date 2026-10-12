@@ -13,6 +13,8 @@ extension String {
 
   static let stalemate = "Stalemate"
 
+  static let threefoldRepetition = "threefold repetition"
+
   static let toMove = "to move"
 
   static let wins = "wins"
