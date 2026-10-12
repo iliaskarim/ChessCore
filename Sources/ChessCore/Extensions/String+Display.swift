@@ -9,6 +9,8 @@ extension String {
 
   static let fiftyMoveRule = "fifty-move rule"
 
+  static let insufficientMaterial = "insufficient material"
+
   static let stalemate = "Stalemate"
 
   static let toMove = "to move"
