@@ -9,6 +9,11 @@
 # Blank line after every switch case, including one-liners (off by default).
 --enable blankLineAfterSwitchCase
 --blank-line-after-switch-case always
+# Blank line after a guard's closing brace, including between consecutive
+# guards, unless the next token is `}` or an operator (off by default).
+# Does not apply to if/else.
+--enable blankLinesAfterGuardStatements
+--line-between-guards true
 # case .foo: return bar → body on the next line (off by default).
 --enable wrapCaseBodies
 --binarygrouping none

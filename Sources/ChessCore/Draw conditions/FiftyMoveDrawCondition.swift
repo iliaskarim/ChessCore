@@ -1,16 +1,6 @@
-private extension Move {
+private extension AnyMove {
   var isIrreversible: Bool {
-    isPawnMove || isCapture
-  }
-
-  var isPawnMove: Bool {
-    switch self {
-    case let .translation(translation):
-      translation.figure == .pawn
-
-    case .castling:
-      false
-    }
+    figure == .pawn || isCapture
   }
 }
 

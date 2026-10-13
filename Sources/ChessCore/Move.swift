@@ -5,116 +5,27 @@
 /// queenside. Non-castling moves record the moving figure, the destination
 /// square, whether the move captures, an optional promotion figure, and
 /// optional algebraic disambiguation.
-public enum Move: Hashable, Sendable {
-  /// A castling move.
+public protocol Move: CustomStringConvertible, Sendable {
+  /// Disambiguation file, if any.
+  var disambiguationFile: Square.File? { get }
+
+  /// Disambiguation rank, if any.
+  var disambiguationRank: Square.Rank? { get }
+
+  /// The figure that moves.
+  var figure: Piece.Figure { get }
+
+  /// Whether the move captures.
+  var isCapture: Bool { get }
+
+  /// Figure to promote to, if any.
+  var promotion: Piece.Figure? { get }
+
+  /// Square the moving piece moves to.
   ///
-  /// Castling is either kingside or queenside.
-  public enum Castling: String, CaseIterable, Sendable {
-    /// Kingside castling.
-    case kingside = "O-O"
+  /// `color` selects the castling rank. Other moves ignore it.
+  func targetSquare(for color: Piece.Color) -> Square
 
-    /// Queenside castling.
-    case queenside = "O-O-O"
-  }
-
-  /// A non-castling move.
-  ///
-  /// Details include the moving figure, the square the figure moves to, whether
-  /// the move captures, an optional promotion figure, and optional algebraic
-  /// disambiguation.
-  public struct Translation: Hashable, Sendable {
-    /// Moving figure.
-    public let figure: Piece.Figure
-
-    /// Square the figure moves to.
-    public let targetSquare: Square
-
-    /// Whether the move captures.
-    public let isCapture: Bool
-
-    /// Figure to promote to, if any.
-    public let promotion: Piece.Figure?
-
-    /// Disambiguation file, if any.
-    public let disambiguationFile: Square.File?
-
-    /// Disambiguation rank, if any.
-    public let disambiguationRank: Square.Rank?
-
-    /// Creates a translation describing a non-castling move.
-    ///
-    /// - Parameters:
-    ///   - figure: The moving figure.
-    ///   - targetSquare: The square the figure moves to.
-    ///   - isCapture: Whether the move captures. Defaults to `false`.
-    ///   - promotion: The figure to promote to, if any. Defaults to `nil`.
-    ///   - disambiguationFile: The disambiguation file, if any. Defaults to `nil`.
-    ///   - disambiguationRank: The disambiguation rank, if any. Defaults to `nil`.
-    public init(
-      figure: Piece.Figure,
-      targetSquare: Square,
-      isCapture: Bool = false,
-      promotion: Piece.Figure? = nil,
-      disambiguationFile: Square.File? = nil,
-      disambiguationRank: Square.Rank? = nil
-    ) {
-      self.figure = figure
-      self.isCapture = isCapture
-      self.promotion = promotion
-      self.disambiguationFile = disambiguationFile
-      self.disambiguationRank = disambiguationRank
-      self.targetSquare = targetSquare
-    }
-  }
-
-  /// The move is castling.
-  case castling(_ castling: Castling)
-
-  /// The move is a non-castling move.
-  case translation(_ translation: Translation)
-
-  var isCapture: Bool {
-    switch self {
-    case let .translation(translation):
-      translation.isCapture
-
-    case .castling:
-      false
-    }
-  }
-}
-
-extension Move: CustomStringConvertible {
-  public var description: String {
-    switch self {
-    case let .castling(castling):
-      "\(castling)"
-
-    case let .translation(translation):
-      "\(translation)"
-    }
-  }
-}
-
-extension Move.Castling: CustomStringConvertible {
-  public var description: String {
-    rawValue
-  }
-}
-
-extension Move.Translation: CustomStringConvertible {
-  public var description: String {
-    figure.rawValue.appending(disambiguationDescription)
-      .appending(isCapture ? Notation.Marker.capture.rawValue : "")
-      .appending(targetSquare.description)
-      .appending(promotionDescription)
-  }
-
-  private var disambiguationDescription: String {
-    "\(disambiguationFile?.description ?? "")\(disambiguationRank?.description ?? "")"
-  }
-
-  private var promotionDescription: String {
-    promotion.map(\.rawValue).map(Notation.Marker.promotion.rawValue.appending) ?? ""
-  }
+  /// One board update for each step of this move.
+  func transforms(for piece: Piece, from square: Square) -> [Board.Transform]
 }

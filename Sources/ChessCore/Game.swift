@@ -111,12 +111,13 @@ public class Game: BoardDataSource, ObservableObject {
   ///   `MoveError.ambiguousMove(candidates:)` if multiple moves match the
   ///   input, `MoveError.illegalMoveIntoCheck` if the move leaves the mover in
   ///   check, or `MoveError.illegalMove` if no legal matching move exists.
-  public func play(_ move: Move) throws {
+  public func play(_ move: some Move & Hashable) throws {
     guard case .toMove = status else {
       throw GameStateError.gameOver
     }
 
     board = try board.applying(move: move)
+    let move = AnyMove(move)
     turns += [.move(move, punctuation: nil)]
 
     // Calculate the punctuation after adding the move to turns played.
@@ -124,14 +125,13 @@ public class Game: BoardDataSource, ObservableObject {
   }
 
   func hasPieceMoved(_ piece: Piece, from square: Square) -> Bool {
-    board[square] != piece || turns.contains { turn in
-      switch turn {
-      case let .move(.translation(translation), _):
-        translation.targetSquare == square
-
-      default:
-        false
+    board[square] != piece || turns.enumerated().contains { index, turn in
+      guard case let .move(move, _) = turn else {
+        return false
       }
+
+      let color: Piece.Color = index.isMultiple(of: 2) ? .white : .black
+      return move.targetSquare(for: color) == square
     }
   }
 

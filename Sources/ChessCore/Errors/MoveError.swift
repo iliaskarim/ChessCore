@@ -1,7 +1,7 @@
 /// Errors related to move validation.
 public enum MoveError: Error, Equatable {
   /// More than one legal move matches the requested move.
-  case ambiguousMove(candidates: [Move])
+  case ambiguousMove(candidates: [AnyMove])
 
   /// No legal move matches the requested move.
   case illegalMove
