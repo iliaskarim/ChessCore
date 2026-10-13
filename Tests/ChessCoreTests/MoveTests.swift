@@ -8,23 +8,23 @@ private extension Square {
 struct MoveTests {
   @Test
   func castlingMoveIsCapture() {
-    #expect(!Move.castling(.kingside).isCapture)
-    #expect(!Move.castling(.queenside).isCapture)
+    #expect(!Castling.kingside.isCapture)
+    #expect(!Castling.queenside.isCapture)
   }
 
   @Test
   func translationMoveIsCapture() {
-    let xe5 = Move.translation(.init(
+    let xe5 = Translation(
       figure: .pawn,
       targetSquare: .e5,
       isCapture: true
-    ))
+    )
     #expect(xe5.isCapture)
 
-    let e5 = Move.translation(.init(
+    let e5 = Translation(
       figure: .pawn,
       targetSquare: .e5
-    ))
+    )
     #expect(!e5.isCapture)
   }
 }

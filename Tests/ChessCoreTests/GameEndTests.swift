@@ -119,12 +119,12 @@ struct GameEndTests {
 
   @Test
   func fiftyMoveRule() {
-    let na3 = Move.translation(.init(figure: .knight, targetSquare: .a3))
-    let nh6 = Move.translation(.init(figure: .knight, targetSquare: .h6))
-    let nb1 = Move.translation(.init(figure: .knight, targetSquare: .b1))
-    let ng8 = Move.translation(.init(figure: .knight, targetSquare: .g8))
+    let na3 = Translation(figure: .knight, targetSquare: .a3)
+    let nh6 = Translation(figure: .knight, targetSquare: .h6)
+    let nb1 = Translation(figure: .knight, targetSquare: .b1)
+    let ng8 = Translation(figure: .knight, targetSquare: .g8)
 
-    let moves = [na3, nh6, nb1, ng8]
+    let moves = [na3, nh6, nb1, ng8].map(AnyMove.init)
     let turns: [Turn] = (0 ..< 100).map { ply in
       .move(moves[ply % moves.count], punctuation: nil)
     }
@@ -141,32 +141,32 @@ struct GameEndTests {
     let game = Game()
 
     // 1.
-    let e4 = Move.translation(.init(figure: .pawn, targetSquare: .e4))
+    let e4 = Translation(figure: .pawn, targetSquare: .e4)
     try game.play(e4)
 
-    let e5 = Move.translation(.init(figure: .pawn, targetSquare: .e5))
+    let e5 = Translation(figure: .pawn, targetSquare: .e5)
     try game.play(e5)
 
     // 2.
-    let qh5 = Move.translation(.init(figure: .queen, targetSquare: .h5))
+    let qh5 = Translation(figure: .queen, targetSquare: .h5)
     try game.play(qh5)
 
-    let nc6 = Move.translation(.init(figure: .knight, targetSquare: .c6))
+    let nc6 = Translation(figure: .knight, targetSquare: .c6)
     try game.play(nc6)
 
     // 3.
-    let bc4 = Move.translation(.init(figure: .bishop, targetSquare: .c4))
+    let bc4 = Translation(figure: .bishop, targetSquare: .c4)
     try game.play(bc4)
 
-    let nf6 = Move.translation(.init(figure: .knight, targetSquare: .f6))
+    let nf6 = Translation(figure: .knight, targetSquare: .f6)
     try game.play(nf6)
 
     // 4.
-    let qxf7 = Move.translation(.init(
+    let qxf7 = Translation(
       figure: .queen,
       targetSquare: .f7,
       isCapture: true
-    ))
+    )
     try game.play(qxf7)
 
     #expect(game.status == .winner(.white, isByResignation: false))
@@ -180,7 +180,7 @@ struct GameEndTests {
       .e8: .blackKing
     ])
 
-    let ke6 = Move.translation(.init(figure: .king, targetSquare: .e6))
+    let ke6 = Translation(figure: .king, targetSquare: .e6)
     try game.play(ke6)
 
     #expect(game.status == .draw(StalemateDrawCondition.self))
@@ -196,10 +196,10 @@ struct GameEndTests {
       .g8: .blackKnight
     ])
 
-    let na3 = Move.translation(.init(figure: .knight, targetSquare: .a3))
-    let nh6 = Move.translation(.init(figure: .knight, targetSquare: .h6))
-    let nb1 = Move.translation(.init(figure: .knight, targetSquare: .b1))
-    let ng8 = Move.translation(.init(figure: .knight, targetSquare: .g8))
+    let na3 = Translation(figure: .knight, targetSquare: .a3)
+    let nh6 = Translation(figure: .knight, targetSquare: .h6)
+    let nb1 = Translation(figure: .knight, targetSquare: .b1)
+    let ng8 = Translation(figure: .knight, targetSquare: .g8)
 
     for move in [na3, nh6, nb1, ng8, na3, nh6, nb1, ng8] {
       try game.play(move)

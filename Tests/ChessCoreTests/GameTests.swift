@@ -35,9 +35,9 @@ private extension Square {
 
 enum GameTests {
   @Suite("Castling")
-  struct Castling {
-    @Test(arguments: [Square.File.a, .b, .h], Move.Castling.allCases)
-    func bothSidesAreLegalWhenFileIsAttacked(on file: Square.File, side: Move.Castling) throws {
+  struct CastlingMoves {
+    @Test(arguments: [Square.File.a, .b, .h], Castling.allCases)
+    func bothSidesAreLegalWhenFileIsAttacked(on file: Square.File, side: Castling) throws {
       let game = Game(board: [
         .e1: .whiteKing,
         .a1: .whiteRook,
@@ -46,7 +46,7 @@ enum GameTests {
         Square(file: file, rank: .eight): .blackRook
       ])
 
-      try game.play(.castling(side))
+      try game.play(side)
       expectCastled(side, in: game)
     }
 
@@ -59,18 +59,18 @@ enum GameTests {
         .e8: .blackKing
       ])
 
-      let ke1 = Move.translation(.init(figure: .king, targetSquare: .e1))
+      let ke1 = Translation(figure: .king, targetSquare: .e1)
       try game.play(ke1)
 
-      let kd8 = Move.translation(.init(figure: .king, targetSquare: .d8))
+      let kd8 = Translation(figure: .king, targetSquare: .d8)
       try game.play(kd8)
 
-      let kingsideCastle = Move.castling(.kingside)
+      let kingsideCastle = Castling.kingside
       #expect(throws: MoveError.illegalMove) {
         try game.play(kingsideCastle)
       }
 
-      let queensideCastle = Move.castling(.queenside)
+      let queensideCastle = Castling.queenside
       #expect(throws: MoveError.illegalMove) {
         try game.play(queensideCastle)
       }
@@ -86,12 +86,12 @@ enum GameTests {
         .e7: .blackRook
       ])
 
-      let kingsideCastle = Move.castling(.kingside)
+      let kingsideCastle = Castling.kingside
       #expect(throws: MoveError.illegalMove) {
         try game.play(kingsideCastle)
       }
 
-      let queensideCastle = Move.castling(.queenside)
+      let queensideCastle = Castling.queenside
       #expect(throws: MoveError.illegalMove) {
         try game.play(queensideCastle)
       }
@@ -109,11 +109,11 @@ enum GameTests {
 
       let affectedSide = affectedSide(for: file)
       #expect(throws: MoveError.illegalMoveIntoCheck) {
-        try game.play(.castling(affectedSide))
+        try game.play(affectedSide)
       }
 
-      let openSide: Move.Castling = affectedSide == .kingside ? .queenside : .kingside
-      try game.play(.castling(openSide))
+      let openSide: Castling = affectedSide == .kingside ? .queenside : .kingside
+      try game.play(openSide)
       expectCastled(openSide, in: game)
     }
 
@@ -129,16 +129,16 @@ enum GameTests {
 
       let affectedSide = affectedSide(for: file)
       #expect(throws: MoveError.illegalMove) {
-        try game.play(.castling(affectedSide))
+        try game.play(affectedSide)
       }
 
-      let openSide: Move.Castling = affectedSide == .kingside ? .queenside : .kingside
-      try game.play(.castling(openSide))
+      let openSide: Castling = affectedSide == .kingside ? .queenside : .kingside
+      try game.play(openSide)
       expectCastled(openSide, in: game)
     }
 
-    @Test(arguments: Move.Castling.allCases)
-    func rightsAreRookSpecificAfterRookIsMoved(from side: Move.Castling) throws {
+    @Test(arguments: Castling.allCases)
+    func rightsAreRookSpecificAfterRookIsMoved(from side: Castling) throws {
       let rookFile: Square.File = side == .kingside ? .h : .a
       let game = Game(board: [
         .e1: .whiteKing,
@@ -147,29 +147,42 @@ enum GameTests {
         Square(file: side == .kingside ? .a : .h, rank: .one): .whiteRook
       ])
 
-      let rookHome = Move.translation(.init(
+      let rookHome = Translation(
         figure: .rook,
         targetSquare: Square(file: rookFile, rank: .one)
-      ))
+      )
       try game.play(rookHome)
 
-      let kd8 = Move.translation(.init(figure: .king, targetSquare: .d8))
+      let kd8 = Translation(figure: .king, targetSquare: .d8)
       try game.play(kd8)
 
       #expect(throws: MoveError.illegalMove) {
-        try game.play(.castling(side))
+        try game.play(side)
       }
 
-      let openSide: Move.Castling = side == .kingside ? .queenside : .kingside
-      try game.play(.castling(openSide))
+      let openSide: Castling = side == .kingside ? .queenside : .kingside
+      try game.play(openSide)
       expectCastled(openSide, in: game)
     }
 
-    private func affectedSide(for file: Square.File) -> Move.Castling {
+    @Test
+    func kingTranslationToCastlingSquareCastles() throws {
+      let game = Game(board: [
+        .e1: .whiteKing,
+        .h1: .whiteRook,
+        .e8: .blackKing
+      ])
+      let kg1 = Translation(figure: .king, targetSquare: .g1)
+
+      try game.play(kg1)
+      expectCastled(.kingside, in: game)
+    }
+
+    private func affectedSide(for file: Square.File) -> Castling {
       file.rawValue < Square.File.e.rawValue ? .queenside : .kingside
     }
 
-    private func expectCastled(_ side: Move.Castling, in game: Game) {
+    private func expectCastled(_ side: Castling, in game: Game) {
       switch side {
       case .kingside:
         #expect(game.board[.g1] == .whiteKing)
@@ -197,14 +210,14 @@ enum GameTests {
         .e4: .blackPawn
       ])
 
-      let d4 = Move.translation(.init(figure: .pawn, targetSquare: .d4))
+      let d4 = Translation(figure: .pawn, targetSquare: .d4)
       try game.play(d4)
 
-      let exd3 = Move.translation(.init(
+      let exd3 = Translation(
         figure: .pawn,
         targetSquare: .d3,
         isCapture: true
-      ))
+      )
       try game.play(exd3)
 
       #expect(game.board[.d3] == .blackPawn)
@@ -220,20 +233,20 @@ enum GameTests {
         .e5: .blackPawn
       ])
 
-      let d4 = Move.translation(.init(figure: .pawn, targetSquare: .d4))
+      let d4 = Translation(figure: .pawn, targetSquare: .d4)
       try game.play(d4)
 
-      let e4 = Move.translation(.init(figure: .pawn, targetSquare: .e4))
+      let e4 = Translation(figure: .pawn, targetSquare: .e4)
       try game.play(e4)
 
-      let kd1 = Move.translation(.init(figure: .king, targetSquare: .d1))
+      let kd1 = Translation(figure: .king, targetSquare: .d1)
       try game.play(kd1)
 
-      let exd3 = Move.translation(.init(
+      let exd3 = Translation(
         figure: .pawn,
         targetSquare: .d3,
         isCapture: true
-      ))
+      )
 
       #expect(throws: MoveError.illegalMove) {
         try game.play(exd3)
@@ -249,18 +262,31 @@ enum GameTests {
         .e4: .blackPawn
       ])
 
-      let d4 = Move.translation(.init(figure: .pawn, targetSquare: .d4))
+      let d4 = Translation(figure: .pawn, targetSquare: .d4)
       try game.play(d4)
 
-      let exd3 = Move.translation(.init(
+      let exd3 = Translation(
         figure: .pawn,
         targetSquare: .d3,
         isCapture: true
-      ))
+      )
 
       #expect(throws: MoveError.illegalMove) {
         try game.play(exd3)
       }
+    }
+  }
+
+  @Suite("Generated move")
+  struct GeneratedMove {
+    @Test
+    func playsMoveReturnedFromBoard() throws {
+      let game = Game()
+      let move = try #require(game.board.moves(from: .e2)[.e4]?.first)
+      try game.play(move)
+
+      #expect(game.board[.e4] == .whitePawn)
+      #expect(game.board[.e2] == nil)
     }
   }
 
@@ -275,12 +301,12 @@ enum GameTests {
         .h8: .blackRook
       ])
 
-      let gxh8N = Move.translation(.init(
+      let gxh8N = Translation(
         figure: .pawn,
         targetSquare: .h8,
         isCapture: true,
         promotion: .knight
-      ))
+      )
       try game.play(gxh8N)
 
       #expect(game.board[.h8] == .whiteKnight)
@@ -295,11 +321,11 @@ enum GameTests {
         .e8: .blackKing
       ])
 
-      let g8R = Move.translation(.init(
+      let g8R = Translation(
         figure: .pawn,
         targetSquare: .g8,
         promotion: .rook
-      ))
+      )
       try game.play(g8R)
 
       #expect(game.board[.g8] == .whiteRook)

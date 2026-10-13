@@ -9,23 +9,6 @@ private extension Board {
   }
 }
 
-private extension Move {
-  static func translation(
-    figure: Piece.Figure,
-    square: Square,
-    targetSquare: Square,
-    promotion: Piece.Figure? = nil
-  ) -> Self {
-    .translation(.init(
-      figure: figure,
-      targetSquare: targetSquare,
-      promotion: promotion,
-      disambiguationFile: square.file,
-      disambiguationRank: square.rank
-    ))
-  }
-}
-
 private extension Piece {
   static let blackKing = Self(color: .black, figure: .king)
   static let blackRook = Self(color: .black, figure: .rook)
@@ -61,9 +44,26 @@ private extension Square {
   static let h8 = Self(file: .h, rank: .eight)
 }
 
+private extension Translation {
+  init(
+    figure: Piece.Figure,
+    square: Square,
+    targetSquare: Square,
+    promotion: Piece.Figure? = nil
+  ) {
+    self.init(
+      figure: figure,
+      targetSquare: targetSquare,
+      promotion: promotion,
+      disambiguationFile: square.file,
+      disambiguationRank: square.rank
+    )
+  }
+}
+
 struct BoardTests {
   @Suite("Castling")
-  struct Castling {
+  struct CastlingMoves {
     @Test
     func blackMoves() {
       var board: Board = [
@@ -74,23 +74,23 @@ struct BoardTests {
       let dataSource = MockBoardDataSource(toMove: .black)
       board.dataSource = dataSource
 
-      let kingsideCastle = Move.castling(.kingside)
-      let queensideCastle = Move.castling(.queenside)
-      let kd8 = Move.translation(figure: .king, square: .e8, targetSquare: .d8)
-      let kf8 = Move.translation(figure: .king, square: .e8, targetSquare: .f8)
-      let kd7 = Move.translation(figure: .king, square: .e8, targetSquare: .d7)
-      let ke7 = Move.translation(figure: .king, square: .e8, targetSquare: .e7)
-      let kf7 = Move.translation(figure: .king, square: .e8, targetSquare: .f7)
+      let kingsideCastle = Castling.kingside
+      let queensideCastle = Castling.queenside
+      let kd8 = Translation(figure: .king, square: .e8, targetSquare: .d8)
+      let kf8 = Translation(figure: .king, square: .e8, targetSquare: .f8)
+      let kd7 = Translation(figure: .king, square: .e8, targetSquare: .d7)
+      let ke7 = Translation(figure: .king, square: .e8, targetSquare: .e7)
+      let kf7 = Translation(figure: .king, square: .e8, targetSquare: .f7)
 
       let actualMoves = board.moves(from: .e8)
       #expect(actualMoves.count == 7)
-      #expect(actualMoves[.g8] == [kingsideCastle])
-      #expect(actualMoves[.c8] == [queensideCastle])
-      #expect(actualMoves[.d8] == [kd8])
-      #expect(actualMoves[.f8] == [kf8])
-      #expect(actualMoves[.d7] == [kd7])
-      #expect(actualMoves[.e7] == [ke7])
-      #expect(actualMoves[.f7] == [kf7])
+      #expect(actualMoves[.g8] == [AnyMove(kingsideCastle)])
+      #expect(actualMoves[.c8] == [AnyMove(queensideCastle)])
+      #expect(actualMoves[.d8] == [AnyMove(kd8)])
+      #expect(actualMoves[.f8] == [AnyMove(kf8)])
+      #expect(actualMoves[.d7] == [AnyMove(kd7)])
+      #expect(actualMoves[.e7] == [AnyMove(ke7)])
+      #expect(actualMoves[.f7] == [AnyMove(kf7)])
     }
 
     @Test
@@ -101,23 +101,23 @@ struct BoardTests {
         .h1: .whiteRook
       ]
 
-      let kingsideCastle = Move.castling(.kingside)
-      let queensideCastle = Move.castling(.queenside)
-      let kd1 = Move.translation(figure: .king, square: .e1, targetSquare: .d1)
-      let kf1 = Move.translation(figure: .king, square: .e1, targetSquare: .f1)
-      let kd2 = Move.translation(figure: .king, square: .e1, targetSquare: .d2)
-      let ke2 = Move.translation(figure: .king, square: .e1, targetSquare: .e2)
-      let kf2 = Move.translation(figure: .king, square: .e1, targetSquare: .f2)
+      let kingsideCastle = Castling.kingside
+      let queensideCastle = Castling.queenside
+      let kd1 = Translation(figure: .king, square: .e1, targetSquare: .d1)
+      let kf1 = Translation(figure: .king, square: .e1, targetSquare: .f1)
+      let kd2 = Translation(figure: .king, square: .e1, targetSquare: .d2)
+      let ke2 = Translation(figure: .king, square: .e1, targetSquare: .e2)
+      let kf2 = Translation(figure: .king, square: .e1, targetSquare: .f2)
 
       let actualMoves = board.moves(from: .e1)
       #expect(actualMoves.count == 7)
-      #expect(actualMoves[.g1] == [kingsideCastle])
-      #expect(actualMoves[.c1] == [queensideCastle])
-      #expect(actualMoves[.d1] == [kd1])
-      #expect(actualMoves[.f1] == [kf1])
-      #expect(actualMoves[.d2] == [kd2])
-      #expect(actualMoves[.e2] == [ke2])
-      #expect(actualMoves[.f2] == [kf2])
+      #expect(actualMoves[.g1] == [AnyMove(kingsideCastle)])
+      #expect(actualMoves[.c1] == [AnyMove(queensideCastle)])
+      #expect(actualMoves[.d1] == [AnyMove(kd1)])
+      #expect(actualMoves[.f1] == [AnyMove(kf1)])
+      #expect(actualMoves[.d2] == [AnyMove(kd2)])
+      #expect(actualMoves[.e2] == [AnyMove(ke2)])
+      #expect(actualMoves[.f2] == [AnyMove(kf2)])
     }
   }
 
@@ -146,24 +146,24 @@ struct BoardTests {
 
     @Test
     func knightMovesFromB1() {
-      let na3 = Move.translation(figure: .knight, square: .b1, targetSquare: .a3)
-      let nc3 = Move.translation(figure: .knight, square: .b1, targetSquare: .c3)
+      let na3 = Translation(figure: .knight, square: .b1, targetSquare: .a3)
+      let nc3 = Translation(figure: .knight, square: .b1, targetSquare: .c3)
 
       let actualMoves = Board.board.moves(from: .b1)
       #expect(actualMoves.count == 2)
-      #expect(actualMoves[.a3] == [na3])
-      #expect(actualMoves[.c3] == [nc3])
+      #expect(actualMoves[.a3] == [AnyMove(na3)])
+      #expect(actualMoves[.c3] == [AnyMove(nc3)])
     }
 
     @Test
     func knightMovesFromG1() {
-      let nf3 = Move.translation(figure: .knight, square: .g1, targetSquare: .f3)
-      let nh3 = Move.translation(figure: .knight, square: .g1, targetSquare: .h3)
+      let nf3 = Translation(figure: .knight, square: .g1, targetSquare: .f3)
+      let nh3 = Translation(figure: .knight, square: .g1, targetSquare: .h3)
 
       let actualMoves = Board.board.moves(from: .g1)
       #expect(actualMoves.count == 2)
-      #expect(actualMoves[.f3] == [nf3])
-      #expect(actualMoves[.h3] == [nh3])
+      #expect(actualMoves[.f3] == [AnyMove(nf3)])
+      #expect(actualMoves[.h3] == [AnyMove(nh3)])
     }
 
     @Test(arguments: Square.File.allCases)
@@ -171,13 +171,13 @@ struct BoardTests {
       let square = Square(file: file, rank: .two)
       let rankThree = Square(file: file, rank: .three)
       let rankFour = Square(file: file, rank: .four)
-      let moveToRankThree = Move.translation(figure: .pawn, square: square, targetSquare: rankThree)
-      let moveToRankFour = Move.translation(figure: .pawn, square: square, targetSquare: rankFour)
+      let moveToRankThree = Translation(figure: .pawn, square: square, targetSquare: rankThree)
+      let moveToRankFour = Translation(figure: .pawn, square: square, targetSquare: rankFour)
 
       let actualMoves = Board.board.moves(from: square)
       #expect(actualMoves.count == 2)
-      #expect(actualMoves[rankThree] == [moveToRankThree])
-      #expect(actualMoves[rankFour] == [moveToRankFour])
+      #expect(actualMoves[rankThree] == [AnyMove(moveToRankThree)])
+      #expect(actualMoves[rankFour] == [AnyMove(moveToRankFour)])
     }
   }
 
@@ -195,7 +195,12 @@ struct BoardTests {
 
       #expect(Set(board.moves(from: square)[targetSquare] ?? []) == Set(
         [Piece.Figure.queen, .rook, .bishop, .knight].map { promotion in
-          .translation(figure: .pawn, square: square, targetSquare: targetSquare, promotion: promotion)
+          AnyMove(Translation(
+            figure: .pawn,
+            square: square,
+            targetSquare: targetSquare,
+            promotion: promotion
+          ))
         }
       ))
     }

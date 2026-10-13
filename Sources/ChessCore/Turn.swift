@@ -1,5 +1,5 @@
 enum Turn: Equatable {
-  enum Punctuation: String {
+  enum Punctuation: String, Equatable {
     case check = "+"
 
     case checkmate = "#"
@@ -7,7 +7,7 @@ enum Turn: Equatable {
 
   case end(victor: Piece.Color?)
 
-  case move(_ move: Move, punctuation: Punctuation?)
+  case move(_ move: AnyMove, punctuation: Punctuation?)
 }
 
 extension Turn: CustomStringConvertible {

@@ -1,67 +1,3 @@
-private extension Move {
-  func transforms(for piece: Piece, from square: Square) -> [Board.Transform] {
-    switch self {
-    case let .translation(translation):
-      [{ board in
-        .init(
-          pieces: board.pieces.filter { key, _ in key != square }
-            .merging([
-              translation.targetSquare: .init(
-                color: piece.color,
-                figure: translation.promotion ?? piece.figure
-              )
-            ]) { _, new in new }
-            .filter { key, _ in
-              piece.figure != .pawn
-                || translation.targetSquare != board.enPassantSquare + piece.color.forwardUnitVector
-                || key != board.enPassantSquare
-            },
-          enPassantSquare: piece.figure == .pawn
-            && abs(translation.targetSquare.rank.rawValue - square.rank.rawValue) == 2 ?
-            translation.targetSquare
-            : nil
-        )
-      }]
-
-    case let .castling(castling):
-      // First transform: place the king on rook target square. Legality is
-      // checked after each step so the king cannot castle through attack.
-      [{ board in
-        .init(pieces: board.pieces.filter { key, _ in key != square }
-          .merging([
-            castling.rookTargetSquare(for: piece.color): piece
-          ]) { _, new in new })
-      }, { board in
-        .init(pieces: board.pieces.filter { key, _ in key != castling.rookSquare(for: piece.color) }
-          .merging([
-            castling.kingTargetSquare(for: piece.color): piece,
-            castling.rookTargetSquare(for: piece.color): .init(color: piece.color, figure: .rook)
-          ]) { _, new in new })
-      }]
-    }
-  }
-}
-
-private extension Move.Castling {
-  func kingTargetSquare(for color: Piece.Color) -> Square {
-    .init(file: self == .kingside ? .g : .c, rank: color.backRank)
-  }
-
-  func requiredEmptySquares(for color: Piece.Color) -> [Square] {
-    (self == .kingside ? [.f, .g] : [.b, .c, .d]).map { file in
-      .init(file: file, rank: color.backRank)
-    }
-  }
-
-  func rookSquare(for color: Piece.Color) -> Square {
-    .init(file: self == .kingside ? .h : .a, rank: color.backRank)
-  }
-
-  func rookTargetSquare(for color: Piece.Color) -> Square {
-    .init(file: self == .kingside ? .f : .d, rank: color.backRank)
-  }
-}
-
 private extension Piece {
   var files: [Square.File] {
     switch figure {
@@ -161,18 +97,6 @@ private extension Square {
   }
 }
 
-private extension Square? {
-  static func + (lhs: Self, rhs: Board.Vector) -> Self {
-    guard let lhs,
-          let file = Wrapped.File(rawValue: lhs.file.rawValue + rhs.files),
-          let rank = Wrapped.Rank(rawValue: lhs.rank.rawValue + rhs.ranks) else {
-      return nil
-    }
-
-    return .init(file: file, rank: rank)
-  }
-}
-
 /// An 8x8 chessboard where each square may hold a piece.
 ///
 /// A board represents a position and provides move generation plus status
@@ -192,13 +116,14 @@ public struct Board {
     case stalemate
   }
 
+  /// One step of a move, applied to a board.
+  public typealias Transform = (Board) -> Board
+
   struct Vector {
     let files: Int
 
     let ranks: Int
   }
-
-  fileprivate typealias Transform = (Board) -> (Board)
 
   /// Standard chess starting position.
   ///
@@ -275,47 +200,26 @@ public struct Board {
   ///   - square: The square on the board from which to retrieve possible moves.
   /// - Returns: A dictionary whose keys are each destination square and whose
   ///   values are the moves that end on that square.
-  public func moves(from square: Square) -> [Square: [Move]] {
+  public func moves(from square: Square) -> [Square: [AnyMove]] {
     self[square].map { piece in
       .init(grouping: legalMoves(for: piece, from: square)) { move in
-        switch move {
-        case let .translation(translation):
-          translation.targetSquare
-
-        case let .castling(castling):
-          castling.kingTargetSquare(for: toMove)
-        }
+        move.targetSquare(for: piece.color)
       }
     } ?? [:]
   }
 
-  func applying(move: Move) throws -> Self {
+  func applying(move: some Move & Hashable) throws -> Self {
     let matchingMoves = flatMap { square, piece in
       moves(for: piece, from: square, isCapture: move.isCapture)
         .filter { candidate in
-          switch (candidate, move) {
-          case let (.castling(candidateCastling), .castling(moveCastling)):
-            candidateCastling == moveCastling
-
-          case let (.translation(candidateTranslation), .translation(moveTranslation)):
-            if let candidateFile = candidateTranslation.disambiguationFile,
-               let moveFile = moveTranslation.disambiguationFile,
-               candidateFile != moveFile {
-              false
-            } else if let candidateRank = candidateTranslation.disambiguationRank,
-                      let moveRank = moveTranslation.disambiguationRank,
-                      candidateRank != moveRank {
-              false
-            } else {
-              candidateTranslation.figure == moveTranslation.figure
-                && candidateTranslation.isCapture == moveTranslation.isCapture
-                && candidateTranslation.targetSquare == moveTranslation.targetSquare
-                && candidateTranslation.promotion == moveTranslation.promotion
-            }
-
-          default:
-            false
-          }
+          candidate.figure == move.figure
+            && candidate.isCapture == move.isCapture
+            && candidate.promotion == move.promotion
+            && candidate.targetSquare(for: piece.color) == move.targetSquare(for: piece.color)
+            && (candidate.disambiguationFile == nil || move.disambiguationFile == nil
+              || candidate.disambiguationFile == move.disambiguationFile)
+            && (candidate.disambiguationRank == nil || move.disambiguationRank == nil
+              || candidate.disambiguationRank == move.disambiguationRank)
         }
         .map { candidate in
           (candidate, piece, square)
@@ -326,15 +230,20 @@ public struct Board {
       throw MoveError.ambiguousMove(candidates: matchingMoves.map(\.0))
     }
 
-    guard let (_, piece, square) = matchingMoves.first else {
+    guard let (candidate, piece, square) = matchingMoves.first else {
       throw MoveError.illegalMove
     }
 
-    return try applying(move: move, for: piece, from: square)
+    return try applying(candidate.transforms(for: piece, from: square))
   }
 
-  func applying(move: Move, for piece: Piece, from square: Square) throws -> Self {
-    try move.transforms(for: piece, from: square).reduce(self) { board, transform in
+  init(pieces: [Square: Piece], enPassantSquare: Square? = nil) {
+    self.pieces = pieces
+    self.enPassantSquare = enPassantSquare
+  }
+
+  private func applying(_ transforms: [Transform]) throws -> Self {
+    try transforms.reduce(self) { board, transform in
       var transformedBoard = transform(board)
       transformedBoard.dataSource = dataSource
       guard !transformedBoard.isInCheck else {
@@ -343,11 +252,6 @@ public struct Board {
 
       return transformedBoard
     }
-  }
-
-  init(pieces: [Square: Piece], enPassantSquare: Square? = nil) {
-    self.pieces = pieces
-    self.enPassantSquare = enPassantSquare
   }
 
   private func captureSquare(for piece: Piece, on path: [Square]) -> Square? {
@@ -360,17 +264,17 @@ public struct Board {
     dataSource?.hasPieceMoved(piece, from: square) ?? false
   }
 
-  private func legalMoves(for piece: Piece, from square: Square) -> [Move] {
+  private func legalMoves(for piece: Piece, from square: Square) -> [AnyMove] {
     (
       moves(for: piece, from: square, isCapture: false) +
         moves(for: piece, from: square, isCapture: true)
     )
     .filter { move in
-      (try? applying(move: move, for: piece, from: square)) != nil
+      (try? applying(move.transforms(for: piece, from: square))) != nil
     }
   }
 
-  private func moves(for piece: Piece, from square: Square, isCapture: Bool) -> [Move] {
+  private func moves(for piece: Piece, from square: Square, isCapture: Bool) -> [AnyMove] {
     guard piece.color == toMove else {
       return []
     }
@@ -398,17 +302,16 @@ public struct Board {
 
     let moves = targetSquares.flatMap { targetSquare in
       piece.promotions(for: targetSquare).map { promotion in
-        Move.Translation(
+        AnyMove(Translation(
           figure: piece.figure,
           targetSquare: targetSquare,
           isCapture: isCapture,
           promotion: promotion,
           disambiguationFile: square.file,
           disambiguationRank: square.rank
-        )
+        ))
       }
     }
-    .map(Move.translation)
 
     guard piece == .init(color: toMove, figure: .king),
           square == .init(file: .e, rank: toMove.backRank),
@@ -418,14 +321,27 @@ public struct Board {
       return moves
     }
 
-    return moves + Move.Castling.allCases.filter { castling in
+    let castlingMoves = Castling.allCases.filter { castling in
       let rookSquare = castling.rookSquare(for: toMove)
       let rook = Piece(color: toMove, figure: .rook)
       return pieces[rookSquare] == rook
         && !castling.requiredEmptySquares(for: toMove).contains(where: pieces.keys.contains)
         && !hasPieceMoved(rook, from: rookSquare)
     }
-    .map(Move.castling)
+    .map(AnyMove.init)
+    return moves + castlingMoves
+  }
+}
+
+extension Square? {
+  static func + (lhs: Self, rhs: Board.Vector) -> Self {
+    guard let lhs,
+          let file = Wrapped.File(rawValue: lhs.file.rawValue + rhs.files),
+          let rank = Wrapped.Rank(rawValue: lhs.rank.rawValue + rhs.ranks) else {
+      return nil
+    }
+
+    return .init(file: file, rank: rank)
   }
 }
 
