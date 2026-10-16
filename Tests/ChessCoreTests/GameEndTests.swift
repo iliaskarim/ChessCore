@@ -30,6 +30,7 @@ private extension Square {
   static let e6 = Self(file: .e, rank: .six)
   static let e7 = Self(file: .e, rank: .seven)
   static let e8 = Self(file: .e, rank: .eight)
+  static let f3 = Self(file: .f, rank: .three)
   static let f4 = Self(file: .f, rank: .four)
   static let f5 = Self(file: .f, rank: .five)
   static let f6 = Self(file: .f, rank: .six)
@@ -37,6 +38,7 @@ private extension Square {
   static let g1 = Self(file: .g, rank: .one)
   static let g4 = Self(file: .g, rank: .four)
   static let g8 = Self(file: .g, rank: .eight)
+  static let h1 = Self(file: .h, rank: .one)
   static let h2 = Self(file: .h, rank: .two)
   static let h4 = Self(file: .h, rank: .four)
   static let h5 = Self(file: .h, rank: .five)
@@ -195,6 +197,29 @@ struct GameEndTests {
       turns: turns,
       boards: []
     ))
+  }
+
+  @Test
+  func foolsMate() throws {
+    let game = Game()
+
+    // 1.
+    let f3 = Translation(figure: .pawn, targetSquare: .f3)
+    try game.play(f3)
+
+    let e6 = Translation(figure: .pawn, targetSquare: .e6)
+    try game.play(e6)
+
+    // 2.
+    let g4 = Translation(figure: .pawn, targetSquare: .g4)
+    try game.play(g4)
+
+    let qh4 = Translation(figure: .queen, targetSquare: .h4)
+    try game.play(qh4)
+
+    // The h2 pawn blocks the h1 rook from capturing the queen.
+    #expect(game.board.moves(from: .h1)[.h4] == nil)
+    #expect(game.status == .winner(.black, isByResignation: false))
   }
 
   @Test
