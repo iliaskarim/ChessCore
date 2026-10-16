@@ -18,4 +18,17 @@ xcodebuild docbuild \
     -derivedDataPath build > /dev/null
 $DOCC process-archive transform-for-static-hosting \
     --output-path ./docs \
+    --hosting-base-path "/$SCHEME" \
     "./build/Build/Products/Debug/$SCHEME.doccarchive" > /dev/null
+
+# DocC rewrites each topic page, but leaves the site root index.html
+# loading scripts from `/`. GitHub Pages serves that file for /ChessCore/.
+BASE="/$SCHEME/"
+INDEX="./docs/index.html"
+if grep -q 'var baseUrl = "/"' "$INDEX"; then
+    sed -i '' \
+        -e "s|var baseUrl = \"/\"|var baseUrl = \"$BASE\"|" \
+        -e "s|href=\"/|href=\"$BASE|g" \
+        -e "s|src=\"/|src=\"$BASE|g" \
+        "$INDEX"
+fi
