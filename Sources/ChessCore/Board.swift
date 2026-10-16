@@ -388,9 +388,11 @@ public struct Board {
   }
 
   private func captureSquare(for piece: Piece, on path: [Square]) -> Square? {
-    path.first { square in
-      pieces[square]?.color == piece.color.opposite
+    guard let square = path.first(where: { pieces[$0] != nil }) else {
+      return nil
     }
+
+    return pieces[square]?.color == piece.color.opposite ? square : nil
   }
 
   private func legalMoves(for piece: Piece, from square: Square) -> [AnyMove] {
