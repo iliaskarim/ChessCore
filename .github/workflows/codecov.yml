@@ -22,3 +22,22 @@ jobs:
           name: coverage-macos
           path: coverage
           if-no-files-found: error
+
+  linux-tests:
+    name: Unit-Tests (Linux)
+    runs-on: ubuntu-latest
+    container:
+      image: swift:6.3.3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Print Swift version
+        run: swift --version
+      - name: Run unit tests
+        run: ./scripts/coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-linux
+          path: coverage
+          if-no-files-found: error

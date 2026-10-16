@@ -1,4 +1,13 @@
+#if canImport(Combine)
 import Combine
+#else
+protocol ObservableObject: AnyObject {}
+
+@propertyWrapper
+struct Published<Value> {
+  var wrappedValue: Value
+}
+#endif
 import Foundation
 
 private extension Board.Status {
