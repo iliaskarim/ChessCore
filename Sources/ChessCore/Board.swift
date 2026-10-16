@@ -185,6 +185,12 @@ public struct Board {
   /// Square a pawn just passed over, if a pawn has just moved two ranks.
   let enPassantSquare: Square?
 
+  /// Halfmoves since the last pawn move or capture.
+  let halfmoveClock: Int
+
+  /// Full move number. Starts at 1 and increases after Black moves.
+  let fullmoveNumber: Int
+
   let pieces: [Square: Piece]
 
   let toMove: Piece.Color
@@ -264,6 +270,7 @@ public struct Board {
     }
 
     return try applying(candidate.transforms(for: piece, from: square))
+      .withHalfmoveClock(reset: candidate.figure == .pawn || candidate.isCapture)
   }
 
   func castlingRights(
@@ -324,7 +331,9 @@ public struct Board {
       pieces: pieces,
       enPassantSquare: enPassantSquare,
       toMove: toMove,
-      castlingRights: castlingRights
+      castlingRights: castlingRights,
+      halfmoveClock: halfmoveClock,
+      fullmoveNumber: fullmoveNumber
     )
   }
 
@@ -333,7 +342,20 @@ public struct Board {
       pieces: pieces,
       enPassantSquare: enPassantSquare,
       toMove: toMove,
-      castlingRights: castlingRights
+      castlingRights: castlingRights,
+      halfmoveClock: halfmoveClock,
+      fullmoveNumber: self.toMove == .black ? fullmoveNumber + 1 : fullmoveNumber
+    )
+  }
+
+  func withHalfmoveClock(reset: Bool) -> Board {
+    .init(
+      pieces: pieces,
+      enPassantSquare: enPassantSquare,
+      toMove: toMove,
+      castlingRights: castlingRights,
+      halfmoveClock: reset ? 0 : halfmoveClock + 1,
+      fullmoveNumber: fullmoveNumber
     )
   }
 
@@ -341,12 +363,16 @@ public struct Board {
     pieces: [Square: Piece],
     enPassantSquare: Square? = nil,
     toMove: Piece.Color = .white,
-    castlingRights: [Piece.Color: Set<Castling>]? = nil
+    castlingRights: [Piece.Color: Set<Castling>]? = nil,
+    halfmoveClock: Int = 0,
+    fullmoveNumber: Int = 1
   ) {
     self.pieces = pieces
     self.enPassantSquare = enPassantSquare
     self.toMove = toMove
     self.castlingRights = castlingRights ?? Self.castlingRights(for: pieces)
+    self.halfmoveClock = halfmoveClock
+    self.fullmoveNumber = fullmoveNumber
   }
 
   private func applying(_ transforms: [Transform]) throws -> Self {
