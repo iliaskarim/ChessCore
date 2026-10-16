@@ -21,14 +21,22 @@ $DOCC process-archive transform-for-static-hosting \
     --hosting-base-path "/$SCHEME" \
     "./build/Build/Products/Debug/$SCHEME.doccarchive" > /dev/null
 
-# DocC rewrites each topic page, but leaves the site root index.html
-# loading scripts from `/`. GitHub Pages serves that file for /ChessCore/.
-BASE="/$SCHEME/"
-INDEX="./docs/index.html"
-if grep -q 'var baseUrl = "/"' "$INDEX"; then
-    sed -i '' \
-        -e "s|var baseUrl = \"/\"|var baseUrl = \"$BASE\"|" \
-        -e "s|href=\"/|href=\"$BASE|g" \
-        -e "s|src=\"/|src=\"$BASE|g" \
-        "$INDEX"
-fi
+# DocC has no route for the site root, and its root index.html still loads
+# scripts from `/`. GitHub Pages serves that file for /ChessCore/.
+MODULE="$(basename "$(find ./docs/documentation -mindepth 1 -maxdepth 1 -type d -print -quit)")"
+TARGET="/$SCHEME/documentation/$MODULE/"
+cat > ./docs/index.html <<EOF
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="0; url=${TARGET}">
+<link rel="canonical" href="${TARGET}">
+<title>${SCHEME}</title>
+<script>location.replace("${TARGET}")</script>
+</head>
+<body>
+<p><a href="${TARGET}">${SCHEME} Documentation</a></p>
+</body>
+</html>
+EOF
