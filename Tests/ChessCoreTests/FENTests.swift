@@ -109,4 +109,131 @@ enum FENTests {
       #expect(board.fen == "4k3/8/8/8/8/8/8/4K3 b - e3 0 12")
     }
   }
+
+  @Suite("Import")
+  struct Import {
+    @Test
+    func castlingMarksAreAcceptedInAnyOrder() throws {
+      let board = try Board(
+        fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w qkQK - 0 1"
+      )
+      #expect(board.fen == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    }
+
+    @Test
+    func castlingRightsFromTheStringArePlayable() throws {
+      let game = try Game(board: Board(fen: "4k3/8/8/8/8/8/8/R3K2R w K - 0 1"))
+      let queensideCastle = Castling.queenside
+      #expect(throws: MoveError.illegalMove) {
+        try game.play(queensideCastle)
+      }
+
+      try game.play(Castling.kingside)
+      #expect(game.board.fen == "4k3/8/8/8/8/8/8/R4RK1 b - - 1 1")
+    }
+
+    @Test
+    func loadedPositionCanBePlayed() throws {
+      let game = try Game(board: Board(
+        fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+      ))
+      try game.play(Translation(figure: .pawn, targetSquare: .c5))
+      #expect(
+        game.board.fen == "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"
+      )
+    }
+
+    @Test
+    func omittedCastlingRightsAreNotInferred() throws {
+      let fen = "r3k2r/8/8/8/8/8/8/R3K2R w - - 0 1"
+      let game = try Game(board: Board(fen: fen))
+      #expect(game.board.fen == fen)
+
+      let kingsideCastle = Castling.kingside
+      #expect(throws: MoveError.illegalMove) {
+        try game.play(kingsideCastle)
+      }
+    }
+
+    @Test(arguments: [
+      "8/8/8/8/8/8/8/8 w KK - 0 1",
+      "8/8/8/8/8/8/8/8 w X - 0 1",
+      "8/8/8/8/8/8/8/8 w K- - 0 1",
+      "8/8/8/8/8/8/8/8 w  - 0 1"
+    ])
+    func rejectsMalformedCastlingRights(_ fen: String) {
+      #expect(throws: FENError.invalidCastlingRights) {
+        try Board(fen: fen)
+      }
+    }
+
+    @Test(arguments: ["e9", "i3", "E3", "e"])
+    func rejectsAMalformedEnPassantSquare(_ square: String) {
+      #expect(throws: FENError.invalidEnPassantSquare) {
+        try Board(fen: "8/8/8/8/8/8/8/8 w - \(square) 0 1")
+      }
+    }
+
+    @Test(arguments: ["0", "+1", "x"])
+    func rejectsAMalformedFullmoveNumber(_ fullmove: String) {
+      #expect(throws: FENError.invalidFullmoveNumber) {
+        try Board(fen: "8/8/8/8/8/8/8/8 w - - 0 \(fullmove)")
+      }
+    }
+
+    @Test(arguments: ["-1", "+1", "x"])
+    func rejectsAMalformedHalfmoveClock(_ clock: String) {
+      #expect(throws: FENError.invalidHalfmoveClock) {
+        try Board(fen: "8/8/8/8/8/8/8/8 w - - \(clock) 1")
+      }
+    }
+
+    @Test(arguments: [
+      "8/8/8/8/8/8/8",
+      "9/8/8/8/8/8/8/8",
+      "7/8/8/8/8/8/8/8",
+      "x7/8/8/8/8/8/8/8",
+      "8/8/8//8/8/8/8",
+      "ppppppppp/8/8/8/8/8/8/8",
+      "8/8/8/8/8/8/8/8/8"
+    ])
+    func rejectsMalformedPlacement(_ placement: String) {
+      #expect(throws: FENError.invalidPlacement) {
+        try Board(fen: "\(placement) w - - 0 1")
+      }
+    }
+
+    @Test(arguments: ["W", "white"])
+    func rejectsAnUnknownSideToMove(_ side: String) {
+      #expect(throws: FENError.invalidSideToMove) {
+        try Board(fen: "8/8/8/8/8/8/8/8 \(side) - - 0 1")
+      }
+    }
+
+    @Test(arguments: [
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0",
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 extra",
+      " rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
+    ])
+    func rejectsTheWrongNumberOfFields(_ fen: String) {
+      #expect(throws: FENError.invalidFieldCount) {
+        try Board(fen: fen)
+      }
+    }
+
+    @Test(arguments: [
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+      "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2",
+      "rnbqkb1r/pppppppp/5n2/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+      "4k3/4N3/8/8/8/8/8/4K3 b - - 0 10",
+      "4k2r/8/8/8/8/8/8/R3K3 w Qk - 0 1",
+      "4k3/8/8/8/8/8/8/4K3 b - e3 0 12",
+      "r3k3/8/8/8/8/8/8/4K2R w Kq - 7 9"
+    ])
+    func roundTrip(_ fen: String) throws {
+      #expect(try Board(fen: fen).fen == fen)
+    }
+  }
 }
