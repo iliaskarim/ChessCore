@@ -37,6 +37,10 @@ analyzer_rules:
   - unused_declaration
   - unused_import
 
+# The test target is the in-repo caller of the public API.
+unused_declaration:
+  include_public_and_open: true
+
 line_length:
   warning: 110
   excluded_lines_patterns:
