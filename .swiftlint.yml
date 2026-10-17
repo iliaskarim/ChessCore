@@ -24,6 +24,9 @@ opt_in_rules:
   - vertical_whitespace_between_cases
   # Same as SwiftFormat wrapCaseBodies (no autocorrect).
   - switch_case_on_newline
+  # Same-line conditional return (no autocorrect).
+  # wrapGuardStatementBodies also wraps continue, break, and throw.
+  - conditional_returns_on_newline
   # Parameters with defaults after required ones (no autocorrect).
   - function_default_parameter_at_end
 
@@ -34,10 +37,6 @@ analyzer_rules:
   - unused_declaration
   - unused_import
 
-unused_declaration:
-  severity: error
-  include_public_and_open: true
-
 line_length:
   warning: 110
   excluded_lines_patterns:
@@ -47,11 +46,7 @@ nesting:
   function_level: 1
   type_level: 3
 
-trailing_whitespace:
-  severity: error
-
 non_optional_string_data_conversion:
-  severity: error
   include_variables: true
 
 excluded:

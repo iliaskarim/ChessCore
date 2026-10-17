@@ -1,10 +1,10 @@
 # Bare `just` lists recipes.
 set default-list := true
 
-# SwiftFormat and SwiftLint checks. Matches `.github/workflows/lint.yml`.
+# Apply SwiftFormat and SwiftLint autocorrects.
 lint:
-    swiftformat --lint .
-    swiftlint lint --strict .
+    swiftformat .
+    swiftlint lint --fix .
 
 # Unit tests with an HTML coverage report. Matches `.github/workflows/codecov.yml`.
 coverage:

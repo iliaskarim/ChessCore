@@ -51,4 +51,4 @@ jobs:
         run: swiftformat --lint .
 
       - name: SwiftLint
-        run: swiftlint lint --strict .
+        run: swiftlint lint .

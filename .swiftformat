@@ -16,6 +16,9 @@
 --line-between-guards true
 # case .foo: return bar → body on the next line (off by default).
 --enable wrapCaseBodies
+# guard let foo = bar else { return baz } → body on the next line
+# (off by default). Also wraps continue, break, and throw.
+--enable wrapGuardStatementBodies
 --binarygrouping none
 --commas inline
 --decimalgrouping none
