@@ -3,10 +3,9 @@ public struct StalemateDrawCondition: GameDrawCondition {
   public static let name = String.stalemate.lowercased()
 
   static func isDraw(
-    board: Board,
     turns _: [Turn],
-    boards _: [Board]
+    boards: [Board]
   ) -> Bool {
-    board.status == .stalemate
+    boards.last!.status == .stalemate
   }
 }

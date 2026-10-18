@@ -9,10 +9,10 @@ public struct InsufficientMaterialDrawCondition: GameDrawCondition {
   public static let name = String.insufficientMaterial
 
   static func isDraw(
-    board: Board,
     turns _: [Turn],
-    boards _: [Board]
+    boards: [Board]
   ) -> Bool {
+    let board = boards.last!
     let material = board.pieces.filter { _, piece in
       piece.figure != .king
     }

@@ -9,7 +9,6 @@ public struct FiftyMoveDrawCondition: GameDrawCondition {
   public static let name = String.fiftyMoveRule
 
   static func isDraw(
-    board _: Board,
     turns: [Turn],
     boards _: [Board]
   ) -> Bool {

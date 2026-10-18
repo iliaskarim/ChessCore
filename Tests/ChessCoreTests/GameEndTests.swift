@@ -193,7 +193,6 @@ struct GameEndTests {
     }
 
     #expect(FiftyMoveDrawCondition.isDraw(
-      board: .board,
       turns: turns,
       boards: []
     ))

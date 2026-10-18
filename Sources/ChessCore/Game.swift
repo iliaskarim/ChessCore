@@ -77,7 +77,6 @@ public class Game: ObservableObject {
         .winner(toMove.opposite, isByResignation: false)
       } else if let condition = Self.drawConditions.first(where: { condition in
         condition.isDraw(
-          board: board,
           turns: turns,
           boards: boards
         )
