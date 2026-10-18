@@ -7,7 +7,7 @@ lint:
     swiftlint lint .
 
 # Unit tests with an HTML coverage report. Matches `.github/workflows/codecov.yml`.
-coverage:
+test:
     bash scripts/coverage
 
 # SwiftLint analyze (`scripts/swiftlint-analyze`: clean build-for-testing + analyze).
