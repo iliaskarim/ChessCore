@@ -3,24 +3,39 @@ import Testing
 
 private extension Piece {
   static let blackKing = Self(color: .black, figure: .king)
+
   static let blackPawn = Self(color: .black, figure: .pawn)
+
   static let blackRook = Self(color: .black, figure: .rook)
+
   static let whiteKing = Self(color: .white, figure: .king)
+
   static let whiteKnight = Self(color: .white, figure: .knight)
+
   static let whiteRook = Self(color: .white, figure: .rook)
 }
 
 private extension Square {
   static let a1 = Self(file: .a, rank: .one)
+
   static let c5 = Self(file: .c, rank: .five)
+
   static let d5 = Self(file: .d, rank: .five)
+
   static let e1 = Self(file: .e, rank: .one)
+
   static let e3 = Self(file: .e, rank: .three)
+
   static let e4 = Self(file: .e, rank: .four)
+
   static let e7 = Self(file: .e, rank: .seven)
+
   static let e8 = Self(file: .e, rank: .eight)
+
   static let f3 = Self(file: .f, rank: .three)
+
   static let f6 = Self(file: .f, rank: .six)
+
   static let h8 = Self(file: .h, rank: .eight)
 }
 

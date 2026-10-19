@@ -11,36 +11,63 @@ private extension Board {
 
 private extension Piece {
   static let blackKing = Self(color: .black, figure: .king)
+
   static let blackRook = Self(color: .black, figure: .rook)
+
   static let whiteKing = Self(color: .white, figure: .king)
+
   static let whiteRook = Self(color: .white, figure: .rook)
 }
 
 private extension Square {
   static let a1 = Self(file: .a, rank: .one)
+
   static let a3 = Self(file: .a, rank: .three)
+
   static let a8 = Self(file: .a, rank: .eight)
+
   static let b1 = Self(file: .b, rank: .one)
+
   static let c1 = Self(file: .c, rank: .one)
+
   static let c3 = Self(file: .c, rank: .three)
+
   static let c8 = Self(file: .c, rank: .eight)
+
   static let d1 = Self(file: .d, rank: .one)
+
   static let d2 = Self(file: .d, rank: .two)
+
   static let d7 = Self(file: .d, rank: .seven)
+
   static let d8 = Self(file: .d, rank: .eight)
+
   static let e1 = Self(file: .e, rank: .one)
+
   static let e2 = Self(file: .e, rank: .two)
+
   static let e7 = Self(file: .e, rank: .seven)
+
   static let e8 = Self(file: .e, rank: .eight)
+
   static let f1 = Self(file: .f, rank: .one)
+
   static let f2 = Self(file: .f, rank: .two)
+
   static let f3 = Self(file: .f, rank: .three)
+
   static let f7 = Self(file: .f, rank: .seven)
+
   static let f8 = Self(file: .f, rank: .eight)
+
   static let g1 = Self(file: .g, rank: .one)
+
   static let g8 = Self(file: .g, rank: .eight)
+
   static let h1 = Self(file: .h, rank: .one)
+
   static let h3 = Self(file: .h, rank: .three)
+
   static let h8 = Self(file: .h, rank: .eight)
 }
 

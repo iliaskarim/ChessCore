@@ -3,47 +3,85 @@ import Testing
 
 private extension Piece {
   static let blackBishop = Self(color: .black, figure: .bishop)
+
   static let blackKing = Self(color: .black, figure: .king)
+
   static let blackKnight = Self(color: .black, figure: .knight)
+
   static let blackPawn = Self(color: .black, figure: .pawn)
+
   static let whiteBishop = Self(color: .white, figure: .bishop)
+
   static let whiteKing = Self(color: .white, figure: .king)
+
   static let whiteKnight = Self(color: .white, figure: .knight)
+
   static let whitePawn = Self(color: .white, figure: .pawn)
 }
 
 private extension Square {
   static let a1 = Self(file: .a, rank: .one)
+
   static let a2 = Self(file: .a, rank: .two)
+
   static let a3 = Self(file: .a, rank: .three)
+
   static let a4 = Self(file: .a, rank: .four)
+
   static let b1 = Self(file: .b, rank: .one)
+
   static let b3 = Self(file: .b, rank: .three)
+
   static let b4 = Self(file: .b, rank: .four)
+
   static let c1 = Self(file: .c, rank: .one)
+
   static let c2 = Self(file: .c, rank: .two)
+
   static let c3 = Self(file: .c, rank: .three)
+
   static let c4 = Self(file: .c, rank: .four)
+
   static let c6 = Self(file: .c, rank: .six)
+
   static let d4 = Self(file: .d, rank: .four)
+
   static let e1 = Self(file: .e, rank: .one)
+
   static let e4 = Self(file: .e, rank: .four)
+
   static let e5 = Self(file: .e, rank: .five)
+
   static let e6 = Self(file: .e, rank: .six)
+
   static let e7 = Self(file: .e, rank: .seven)
+
   static let e8 = Self(file: .e, rank: .eight)
+
   static let f3 = Self(file: .f, rank: .three)
+
   static let f4 = Self(file: .f, rank: .four)
+
   static let f5 = Self(file: .f, rank: .five)
+
   static let f6 = Self(file: .f, rank: .six)
+
   static let f7 = Self(file: .f, rank: .seven)
+
   static let g1 = Self(file: .g, rank: .one)
+
   static let g4 = Self(file: .g, rank: .four)
+
   static let g8 = Self(file: .g, rank: .eight)
+
   static let h1 = Self(file: .h, rank: .one)
+
   static let h2 = Self(file: .h, rank: .two)
+
   static let h4 = Self(file: .h, rank: .four)
+
   static let h5 = Self(file: .h, rank: .five)
+
   static let h6 = Self(file: .h, rank: .six)
 }
 

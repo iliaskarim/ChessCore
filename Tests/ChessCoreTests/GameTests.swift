@@ -3,33 +3,57 @@ import Testing
 
 private extension Piece {
   static let blackKing = Self(color: .black, figure: .king)
+
   static let blackPawn = Self(color: .black, figure: .pawn)
+
   static let blackRook = Self(color: .black, figure: .rook)
+
   static let whiteKing = Self(color: .white, figure: .king)
+
   static let whiteKnight = Self(color: .white, figure: .knight)
+
   static let whitePawn = Self(color: .white, figure: .pawn)
+
   static let whiteRook = Self(color: .white, figure: .rook)
 }
 
 private extension Square {
   static let a1 = Self(file: .a, rank: .one)
+
   static let c1 = Self(file: .c, rank: .one)
+
   static let d1 = Self(file: .d, rank: .one)
+
   static let d2 = Self(file: .d, rank: .two)
+
   static let d3 = Self(file: .d, rank: .three)
+
   static let d4 = Self(file: .d, rank: .four)
+
   static let d8 = Self(file: .d, rank: .eight)
+
   static let e1 = Self(file: .e, rank: .one)
+
   static let e2 = Self(file: .e, rank: .two)
+
   static let e4 = Self(file: .e, rank: .four)
+
   static let e5 = Self(file: .e, rank: .five)
+
   static let e7 = Self(file: .e, rank: .seven)
+
   static let e8 = Self(file: .e, rank: .eight)
+
   static let f1 = Self(file: .f, rank: .one)
+
   static let g1 = Self(file: .g, rank: .one)
+
   static let g7 = Self(file: .g, rank: .seven)
+
   static let g8 = Self(file: .g, rank: .eight)
+
   static let h1 = Self(file: .h, rank: .one)
+
   static let h8 = Self(file: .h, rank: .eight)
 }
 
