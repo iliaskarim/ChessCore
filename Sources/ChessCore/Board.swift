@@ -1,17 +1,3 @@
-private extension [Square: Piece] {
-  var castlingRights: [Piece.Color: Set<Castling>] {
-    .init(uniqueKeysWithValues: Piece.Color.allCases.map { color in
-      (
-        color,
-        Set(Castling.allCases.filter { side in
-          self[.init(file: .e, rank: color.backRank)] == .init(color: color, figure: .king)
-            && self[side.rookSquare(for: color)] == .init(color: color, figure: .rook)
-        })
-      )
-    })
-  }
-}
-
 private extension Piece {
   var files: [Square.File] {
     switch figure {
@@ -108,6 +94,20 @@ private extension Square {
     (self + vector).map { square in
       [square] + square.linearPath(for: vector)
     } ?? []
+  }
+}
+
+private extension [Square: Piece] {
+  var castlingRights: [Piece.Color: Set<Castling>] {
+    .init(uniqueKeysWithValues: Piece.Color.allCases.map { color in
+      (
+        color,
+        Set(Castling.allCases.filter { side in
+          self[.init(file: .e, rank: color.backRank)] == .init(color: color, figure: .king)
+            && self[side.rookSquare(for: color)] == .init(color: color, figure: .rook)
+        })
+      )
+    })
   }
 }
 

@@ -1,113 +1,3 @@
-private extension Piece {
-  init?(fen character: Character) {
-    guard character.isLetter else {
-      return nil
-    }
-
-    let symbol = String(character).uppercased()
-    guard let figure = symbol == "P" ? Figure.pawn : Figure(rawValue: symbol) else {
-      return nil
-    }
-
-    self.init(color: character.isUppercase ? .white : .black, figure: figure)
-  }
-
-  var fen: String {
-    let symbol = figure == .pawn ? "P" : figure.rawValue
-    return color == .white ? symbol : symbol.lowercased()
-  }
-}
-
-extension Board {
-  /// Creates a board from Forsyth-Edwards Notation.
-  ///
-  /// Castling rights come from the string. A king and rook on their home squares
-  /// do not grant a right the string omits.
-  ///
-  /// - Parameters:
-  ///   - fen: Piece placement, the side to move, castling rights, the en passant
-  ///     target square, the halfmove clock, and the fullmove number.
-  /// - Throws: `FENError` when `fen` is not valid notation.
-  public init(fen: String) throws {
-    let fields = fen.split(separator: " ", omittingEmptySubsequences: false).map(String.init)
-    guard fields.count == 6 else {
-      throw FENError.invalidFieldCount
-    }
-
-    let pieces = try Self.pieces(from: fields[0])
-    let toMove = try Self.sideToMove(from: fields[1])
-    let castlingRights = try Self.castlingRights(from: fields[2])
-    let enPassantSquare = try Self.enPassantSquare(from: fields[3])
-    let halfmoveClock = try Self.halfmoveClock(from: fields[4])
-    let fullmoveNumber = try Self.fullmoveNumber(from: fields[5])
-    self.init(
-      pieces: pieces,
-      enPassantSquare: enPassantSquare,
-      toMove: toMove,
-      castlingRights: castlingRights,
-      halfmoveClock: halfmoveClock,
-      fullmoveNumber: fullmoveNumber
-    )
-  }
-
-  /// Forsyth-Edwards Notation for this position.
-  ///
-  /// Fields are piece placement, the side to move, castling rights, the en
-  /// passant target square, the halfmove clock, and the fullmove number. A new
-  /// board starts at halfmove 0 and fullmove 1. Applying a move advances both.
-  public var fen: String {
-    [
-      fenPlacement,
-      toMove == .white ? "w" : "b",
-      fenCastling,
-      enPassantSquare?.description ?? "-",
-      String(halfmoveClock),
-      String(fullmoveNumber)
-    ].joined(separator: " ")
-  }
-
-  private var fenCastling: String {
-    let marks = [
-      (Piece.Color.white, Castling.kingside, "K"),
-      (.white, .queenside, "Q"),
-      (.black, .kingside, "k"),
-      (.black, .queenside, "q")
-    ].compactMap { color, side, mark in
-      hasCastlingRight(side, for: color) ? mark : nil
-    }
-    .joined()
-
-    return marks.isEmpty ? "-" : marks
-  }
-
-  private var fenPlacement: String {
-    Square.Rank.allCases.reversed().map(fenRank).joined(separator: "/")
-  }
-
-  private func fenRank(_ rank: Square.Rank) -> String {
-    var empty = 0
-    var text = ""
-    for file in Square.File.allCases {
-      if let piece = pieces[.init(file: file, rank: rank)] {
-        if empty > 0 {
-          text.append(String(empty))
-          empty = 0
-        }
-
-        text.append(piece.fen)
-      } else {
-        empty += 1
-      }
-    }
-
-    if empty > 0 {
-      text.append(String(empty))
-    }
-
-    return text
-  }
-}
-
 private extension Board {
   static func castlingRights(from field: String) throws -> [Piece.Color: Set<Castling>] {
     var rights = [Piece.Color: Set<Castling>](
@@ -251,5 +141,115 @@ private extension Board {
     }
 
     return .init(file: file, rank: rank)
+  }
+}
+
+private extension Piece {
+  var fen: String {
+    let symbol = figure == .pawn ? "P" : figure.rawValue
+    return color == .white ? symbol : symbol.lowercased()
+  }
+
+  init?(fen character: Character) {
+    guard character.isLetter else {
+      return nil
+    }
+
+    let symbol = String(character).uppercased()
+    guard let figure = symbol == "P" ? Figure.pawn : Figure(rawValue: symbol) else {
+      return nil
+    }
+
+    self.init(color: character.isUppercase ? .white : .black, figure: figure)
+  }
+}
+
+extension Board {
+  /// Forsyth-Edwards Notation for this position.
+  ///
+  /// Fields are piece placement, the side to move, castling rights, the en
+  /// passant target square, the halfmove clock, and the fullmove number. A new
+  /// board starts at halfmove 0 and fullmove 1. Applying a move advances both.
+  public var fen: String {
+    [
+      fenPlacement,
+      toMove == .white ? "w" : "b",
+      fenCastling,
+      enPassantSquare?.description ?? "-",
+      String(halfmoveClock),
+      String(fullmoveNumber)
+    ].joined(separator: " ")
+  }
+
+  private var fenCastling: String {
+    let marks = [
+      (Piece.Color.white, Castling.kingside, "K"),
+      (.white, .queenside, "Q"),
+      (.black, .kingside, "k"),
+      (.black, .queenside, "q")
+    ].compactMap { color, side, mark in
+      hasCastlingRight(side, for: color) ? mark : nil
+    }
+    .joined()
+
+    return marks.isEmpty ? "-" : marks
+  }
+
+  private var fenPlacement: String {
+    Square.Rank.allCases.reversed().map(fenRank).joined(separator: "/")
+  }
+
+  /// Creates a board from Forsyth-Edwards Notation.
+  ///
+  /// Castling rights come from the string. A king and rook on their home
+  /// squares do not grant a right the string omits.
+  ///
+  /// - Parameters:
+  ///   - fen: Piece placement, the side to move, castling rights, the en passant
+  ///     target square, the halfmove clock, and the fullmove number.
+  /// - Throws: `FENError` when `fen` is not valid notation.
+  public init(fen: String) throws {
+    let fields = fen.split(separator: " ", omittingEmptySubsequences: false).map(String.init)
+    guard fields.count == 6 else {
+      throw FENError.invalidFieldCount
+    }
+
+    let pieces = try Self.pieces(from: fields[0])
+    let toMove = try Self.sideToMove(from: fields[1])
+    let castlingRights = try Self.castlingRights(from: fields[2])
+    let enPassantSquare = try Self.enPassantSquare(from: fields[3])
+    let halfmoveClock = try Self.halfmoveClock(from: fields[4])
+    let fullmoveNumber = try Self.fullmoveNumber(from: fields[5])
+    self.init(
+      pieces: pieces,
+      enPassantSquare: enPassantSquare,
+      toMove: toMove,
+      castlingRights: castlingRights,
+      halfmoveClock: halfmoveClock,
+      fullmoveNumber: fullmoveNumber
+    )
+  }
+
+  private func fenRank(_ rank: Square.Rank) -> String {
+    var empty = 0
+    var text = ""
+    for file in Square.File.allCases {
+      if let piece = pieces[.init(file: file, rank: rank)] {
+        if empty > 0 {
+          text.append(String(empty))
+          empty = 0
+        }
+
+        text.append(piece.fen)
+      } else {
+        empty += 1
+      }
+    }
+
+    if empty > 0 {
+      text.append(String(empty))
+    }
+
+    return text
   }
 }

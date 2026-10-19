@@ -290,28 +290,6 @@ struct GameEndTests {
   }
 
   @Test
-  func visitingAnEmptyRookSquareCountsAsRepetition() throws {
-    let game = Game(board: [
-      .e1: .whiteKing,
-      .b3: .whiteKnight,
-      .e8: .blackKing,
-      .g8: .blackKnight
-    ])
-
-    let na1 = Translation(figure: .knight, targetSquare: .a1)
-    let nh6 = Translation(figure: .knight, targetSquare: .h6)
-    let nb3 = Translation(figure: .knight, targetSquare: .b3)
-    let ng8 = Translation(figure: .knight, targetSquare: .g8)
-
-    for move in [na1, nh6, nb3, ng8, na1, nh6, nb3, ng8] {
-      try game.play(move)
-    }
-
-    #expect(game.status == .draw(ThreefoldRepetitionDrawCondition.self))
-    #expect(game.status.description == "Draw by threefold repetition.")
-  }
-
-  @Test
   func threefoldRepetition() throws {
     let game = Game(board: [
       .e1: .whiteKing,
@@ -326,6 +304,28 @@ struct GameEndTests {
     let ng8 = Translation(figure: .knight, targetSquare: .g8)
 
     for move in [na3, nh6, nb1, ng8, na3, nh6, nb1, ng8] {
+      try game.play(move)
+    }
+
+    #expect(game.status == .draw(ThreefoldRepetitionDrawCondition.self))
+    #expect(game.status.description == "Draw by threefold repetition.")
+  }
+
+  @Test
+  func visitingAnEmptyRookSquareCountsAsRepetition() throws {
+    let game = Game(board: [
+      .e1: .whiteKing,
+      .b3: .whiteKnight,
+      .e8: .blackKing,
+      .g8: .blackKnight
+    ])
+
+    let na1 = Translation(figure: .knight, targetSquare: .a1)
+    let nh6 = Translation(figure: .knight, targetSquare: .h6)
+    let nb3 = Translation(figure: .knight, targetSquare: .b3)
+    let ng8 = Translation(figure: .knight, targetSquare: .g8)
+
+    for move in [na1, nh6, nb3, ng8, na1, nh6, nb3, ng8] {
       try game.play(move)
     }
 
