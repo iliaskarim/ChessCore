@@ -72,17 +72,16 @@ public extension Translation {
 
   func transforms(for piece: Piece, from square: Square) -> [Board.Transform] {
     [{ board in
-      let capturesEnPassant = piece.figure == .pawn && targetSquare == board.enPassantSquare
-      let capturedSquare = capturesEnPassant
-        ? board.enPassantSquare + .init(
-          files: 0,
-          ranks: -piece.color.forwardUnitVector.ranks
-        )
-        : board[targetSquare].map { _ in targetSquare }
-
-      return board.with(
+      board.with(
         pieces: board.pieces.filter { key, _ in
-          key != square && capturedSquare.map { key != $0 } ?? true
+          key != square && key != (
+            piece.figure == .pawn && targetSquare == board.enPassantSquare
+              ? board.enPassantSquare + .init(
+                files: 0,
+                ranks: -piece.color.forwardUnitVector.ranks
+              )
+              : nil
+          )
         }
         .merging([
           targetSquare: .init(
