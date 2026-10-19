@@ -133,6 +133,36 @@ enum FENTests {
     }
 
     @Test
+    func grantedCastlingRightIsIgnoredWhenTheKingIsAway() throws {
+      let game = try Game(board: Board(fen: "4k3/8/8/8/8/8/4K3/R6R w KQ - 0 1"))
+      #expect(game.board.fen == "4k3/8/8/8/8/8/4K3/R6R w - - 0 1")
+
+      let kingsideCastle = Castling.kingside
+      #expect(throws: MoveError.illegalMove) {
+        try game.play(kingsideCastle)
+      }
+
+      let queensideCastle = Castling.queenside
+      #expect(throws: MoveError.illegalMove) {
+        try game.play(queensideCastle)
+      }
+    }
+
+    @Test
+    func grantedCastlingRightIsIgnoredWhenTheRookIsAway() throws {
+      let game = try Game(board: Board(fen: "4k3/8/8/8/8/8/8/R3K3 w KQ - 0 1"))
+      #expect(game.board.fen == "4k3/8/8/8/8/8/8/R3K3 w Q - 0 1")
+
+      let kingsideCastle = Castling.kingside
+      #expect(throws: MoveError.illegalMove) {
+        try game.play(kingsideCastle)
+      }
+
+      try game.play(Castling.queenside)
+      #expect(game.board.fen == "4k3/8/8/8/8/8/8/2KR4 b - - 1 1")
+    }
+
+    @Test
     func loadedPositionCanBePlayed() throws {
       let game = try Game(board: Board(
         fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"

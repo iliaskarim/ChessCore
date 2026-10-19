@@ -1,3 +1,17 @@
+private extension [Square: Piece] {
+  var castlingRights: [Piece.Color: Set<Castling>] {
+    .init(uniqueKeysWithValues: Piece.Color.allCases.map { color in
+      (
+        color,
+        Set(Castling.allCases.filter { side in
+          self[.init(file: .e, rank: color.backRank)] == .init(color: color, figure: .king)
+            && self[side.rookSquare(for: color)] == .init(color: color, figure: .rook)
+        })
+      )
+    })
+  }
+}
+
 private extension Piece {
   var files: [Square.File] {
     switch figure {
@@ -142,18 +156,6 @@ public struct Board {
     }))
   }
 
-  private static func castlingRights(for pieces: [Square: Piece]) -> [Piece.Color: Set<Castling>] {
-    .init(uniqueKeysWithValues: Piece.Color.allCases.map { color in
-      (
-        color,
-        Set(Castling.allCases.filter { side in
-          pieces[.init(file: .e, rank: color.backRank)] == .init(color: color, figure: .king)
-            && pieces[side.rookSquare(for: color)] == .init(color: color, figure: .rook)
-        })
-      )
-    })
-  }
-
   /// Retrieves the piece located at a specific square on the board.
   ///
   /// - Parameters:
@@ -196,19 +198,16 @@ public struct Board {
   let toMove: Piece.Color
 
   private var canCaptureEnPassant: Bool {
-    guard let enPassantSquare,
-          let capturerRank = Square.Rank(
-            rawValue: enPassantSquare.rank.rawValue - toMove.forwardUnitVector.ranks
-          ) else {
-      return false
-    }
-
-    return [-1, 1].contains { fileOffset in
-      Square.File(rawValue: enPassantSquare.file.rawValue + fileOffset).flatMap { file in
-        self[.init(file: file, rank: capturerRank)].map { piece in
-          piece == .init(color: toMove, figure: .pawn)
-        }
-      } ?? false
+    if let enPassantSquare,
+       let capturerRank = (enPassantSquare - toMove.forwardUnitVector)?.rank {
+      [-1, 1].compactMap { files in
+        Square(file: enPassantSquare.file, rank: capturerRank) + .init(files: files, ranks: 0)
+      }
+      .contains { square in
+        self[square] == .init(color: toMove, figure: .pawn)
+      }
+    } else {
+      false
     }
   }
 
@@ -275,30 +274,28 @@ public struct Board {
 
   func castlingRights(
     moving piece: Piece,
-    from origin: Square,
-    capturing captured: Square?
+    from square: Square,
+    to target: Square
   ) -> [Piece.Color: Set<Castling>] {
     var rights = castlingRights
     if piece.figure == .king {
       rights[piece.color] = []
     } else if piece.figure == .rook, var sides = rights[piece.color] {
       sides.subtract(Castling.allCases.filter { side in
-        side.rookSquare(for: piece.color) == origin
+        side.rookSquare(for: piece.color) == square
       })
       rights[piece.color] = sides
     }
 
-    if let captured {
-      for color in Piece.Color.allCases {
-        guard var sides = rights[color] else {
-          continue
-        }
-
-        sides.subtract(Castling.allCases.filter { side in
-          side.rookSquare(for: color) == captured
-        })
-        rights[color] = sides
+    for color in Piece.Color.allCases {
+      guard var sides = rights[color] else {
+        continue
       }
+
+      sides.subtract(Castling.allCases.filter { side in
+        side.rookSquare(for: color) == target
+      })
+      rights[color] = sides
     }
 
     return rights
@@ -370,7 +367,7 @@ public struct Board {
     self.pieces = pieces
     self.enPassantSquare = enPassantSquare
     self.toMove = toMove
-    self.castlingRights = castlingRights ?? Self.castlingRights(for: pieces)
+    self.castlingRights = castlingRights ?? pieces.castlingRights
     self.halfmoveClock = halfmoveClock
     self.fullmoveNumber = fullmoveNumber
   }
@@ -450,12 +447,11 @@ public struct Board {
       return moves
     }
 
-    let castlingMoves = Castling.allCases.filter { castling in
+    return moves + Castling.allCases.filter { castling in
       hasCastlingRight(castling, for: toMove)
         && !castling.requiredEmptySquares(for: toMove).contains(where: pieces.keys.contains)
     }
     .map(AnyMove.init)
-    return moves + castlingMoves
   }
 }
 
@@ -468,6 +464,10 @@ extension Square? {
     }
 
     return .init(file: file, rank: rank)
+  }
+
+  static func - (lhs: Self, rhs: Board.Vector) -> Self {
+    lhs + .init(files: -rhs.files, ranks: -rhs.ranks)
   }
 }
 

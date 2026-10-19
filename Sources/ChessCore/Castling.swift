@@ -66,7 +66,7 @@ public extension Castling {
             rookTargetSquare(for: piece.color): piece
           ]) { _, new in new },
         enPassantSquare: nil,
-        castlingRights: board.castlingRights(moving: piece, from: square, capturing: nil)
+        castlingRights: board.castlingRights.merging([piece.color: []]) { _, new in new }
       )
     }, { board in
       let rookSquare = rookSquare(for: piece.color)
@@ -77,11 +77,7 @@ public extension Castling {
             rookTargetSquare(for: piece.color): .init(color: piece.color, figure: .rook)
           ]) { _, new in new },
         enPassantSquare: nil,
-        castlingRights: board.castlingRights(
-          moving: .init(color: piece.color, figure: .rook),
-          from: rookSquare,
-          capturing: nil
-        )
+        castlingRights: board.castlingRights
       )
     }]
   }

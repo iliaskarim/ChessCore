@@ -73,22 +73,16 @@ public extension Translation {
   func transforms(for piece: Piece, from square: Square) -> [Board.Transform] {
     [{ board in
       let capturesEnPassant = piece.figure == .pawn && targetSquare == board.enPassantSquare
-      let captured = capturesEnPassant
+      let capturedSquare = capturesEnPassant
         ? board.enPassantSquare + .init(
           files: 0,
           ranks: -piece.color.forwardUnitVector.ranks
         )
         : board[targetSquare].map { _ in targetSquare }
-      let enPassantSquare = piece.figure == .pawn
-        && abs(targetSquare.rank.rawValue - square.rank.rawValue) == 2
-        ? Square.Rank(rawValue: (targetSquare.rank.rawValue + square.rank.rawValue) / 2).map { rank in
-          Square(file: targetSquare.file, rank: rank)
-        }
-        : nil
 
       return board.with(
         pieces: board.pieces.filter { key, _ in
-          key != square && captured.map { key != $0 } ?? true
+          key != square && capturedSquare.map { key != $0 } ?? true
         }
         .merging([
           targetSquare: .init(
@@ -96,8 +90,13 @@ public extension Translation {
             figure: promotion ?? piece.figure
           )
         ]) { _, new in new },
-        enPassantSquare: enPassantSquare,
-        castlingRights: board.castlingRights(moving: piece, from: square, capturing: captured)
+        enPassantSquare: piece.figure == .pawn
+          && abs(targetSquare.rank.rawValue - square.rank.rawValue) == 2
+          ? Square.Rank(rawValue: (targetSquare.rank.rawValue + square.rank.rawValue) / 2).map { rank in
+            Square(file: targetSquare.file, rank: rank)
+          }
+          : nil,
+        castlingRights: board.castlingRights(moving: piece, from: square, to: targetSquare)
       )
     }]
   }

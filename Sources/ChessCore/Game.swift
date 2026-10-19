@@ -74,7 +74,7 @@ public class Game: ObservableObject {
 
     default:
       if board.status == .checkmate {
-        .winner(toMove.opposite, isByResignation: false)
+        .winner(board.toMove.opposite, isByResignation: false)
       } else if let condition = Self.drawConditions.first(where: { condition in
         condition.isDraw(
           turns: turns,
@@ -83,13 +83,9 @@ public class Game: ObservableObject {
       }) {
         .draw(condition)
       } else {
-        .toMove(toMove)
+        .toMove(board.toMove)
       }
     }
-  }
-
-  var toMove: Piece.Color {
-    board.toMove
   }
 
   private var boards = [Board]()
@@ -124,11 +120,8 @@ public class Game: ObservableObject {
 
     board = try board.applying(move: move)
     let move = AnyMove(move)
-    turns += [.move(move, punctuation: nil)]
+    turns += [.move(move, punctuation: board.status?.punctuation)]
     boards += [board]
-
-    // Calculate the punctuation after adding the move to turns played.
-    turns[turns.indices.last!] = .move(move, punctuation: board.status?.punctuation)
   }
 
   /// Creates a game from a board.

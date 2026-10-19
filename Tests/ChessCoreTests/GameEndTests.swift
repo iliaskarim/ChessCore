@@ -13,10 +13,12 @@ private extension Piece {
 }
 
 private extension Square {
+  static let a1 = Self(file: .a, rank: .one)
   static let a2 = Self(file: .a, rank: .two)
   static let a3 = Self(file: .a, rank: .three)
   static let a4 = Self(file: .a, rank: .four)
   static let b1 = Self(file: .b, rank: .one)
+  static let b3 = Self(file: .b, rank: .three)
   static let b4 = Self(file: .b, rank: .four)
   static let c1 = Self(file: .c, rank: .one)
   static let c2 = Self(file: .c, rank: .two)
@@ -47,6 +49,21 @@ private extension Square {
 
 @Suite("Game End")
 struct GameEndTests {
+  /// A white pawn double-step, plus the black pawn that can capture it, if any.
+  struct DoubleStep: Sendable, CustomStringConvertible {
+    var description: String {
+      capturer.map { capturer in
+        "\(square)\(target) from \(capturer)"
+      } ?? "\(square)\(target)"
+    }
+
+    let square: Square
+
+    let target: Square
+
+    let capturer: Square?
+  }
+
   @Suite("Insufficient Material")
   struct InsufficientMaterial {
     @Test
@@ -122,9 +139,9 @@ struct GameEndTests {
   @Suite("Threefold Repetition En Passant")
   struct ThreefoldRepetitionEnPassant {
     @Test(arguments: [
-      DoubleStep(start: .c2, target: .c4, capturer: .d4),
-      DoubleStep(start: .a2, target: .a4, capturer: .b4),
-      DoubleStep(start: .h2, target: .h4, capturer: .g4)
+      DoubleStep(square: .c2, target: .c4, capturer: .d4),
+      DoubleStep(square: .a2, target: .a4, capturer: .b4),
+      DoubleStep(square: .h2, target: .h4, capturer: .g4)
     ])
     func captureRightPreventsRepetition(_ push: DoubleStep) throws {
       let game = try gameRepeated(after: push)
@@ -133,9 +150,9 @@ struct GameEndTests {
     }
 
     @Test(arguments: [
-      DoubleStep(start: .c2, target: .c4, capturer: nil),
-      DoubleStep(start: .a2, target: .a4, capturer: nil),
-      DoubleStep(start: .h2, target: .h4, capturer: nil)
+      DoubleStep(square: .c2, target: .c4, capturer: nil),
+      DoubleStep(square: .a2, target: .a4, capturer: nil),
+      DoubleStep(square: .h2, target: .h4, capturer: nil)
     ])
     func doubleStepWithNoCapturerCountsAsRepetition(_ push: DoubleStep) throws {
       let game = try gameRepeated(after: push)
@@ -148,7 +165,7 @@ struct GameEndTests {
       var pieces = [
         Square.e1: Piece.whiteKing,
         Square.b1: Piece.whiteKnight,
-        push.start: Piece.whitePawn,
+        push.square: Piece.whitePawn,
         Square.e8: Piece.blackKing,
         Square.g8: Piece.blackKnight
       ]
@@ -273,6 +290,28 @@ struct GameEndTests {
   }
 
   @Test
+  func visitingAnEmptyRookSquareCountsAsRepetition() throws {
+    let game = Game(board: [
+      .e1: .whiteKing,
+      .b3: .whiteKnight,
+      .e8: .blackKing,
+      .g8: .blackKnight
+    ])
+
+    let na1 = Translation(figure: .knight, targetSquare: .a1)
+    let nh6 = Translation(figure: .knight, targetSquare: .h6)
+    let nb3 = Translation(figure: .knight, targetSquare: .b3)
+    let ng8 = Translation(figure: .knight, targetSquare: .g8)
+
+    for move in [na1, nh6, nb3, ng8, na1, nh6, nb3, ng8] {
+      try game.play(move)
+    }
+
+    #expect(game.status == .draw(ThreefoldRepetitionDrawCondition.self))
+    #expect(game.status.description == "Draw by threefold repetition.")
+  }
+
+  @Test
   func threefoldRepetition() throws {
     let game = Game(board: [
       .e1: .whiteKing,
@@ -293,19 +332,4 @@ struct GameEndTests {
     #expect(game.status == .draw(ThreefoldRepetitionDrawCondition.self))
     #expect(game.status.description == "Draw by threefold repetition.")
   }
-}
-
-/// A white pawn double-step, plus the black pawn that can capture it, if any.
-struct DoubleStep: Sendable, CustomStringConvertible {
-  var description: String {
-    capturer.map { capturer in
-      "\(start)\(target) from \(capturer)"
-    } ?? "\(start)\(target)"
-  }
-
-  let start: Square
-
-  let target: Square
-
-  let capturer: Square?
 }
